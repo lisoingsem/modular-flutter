@@ -35,7 +35,8 @@ class ModuleAutoRegister {
       // Parse provider class names and register them automatically
       for (final providerClass in module.providers) {
         try {
-          final parsed = ProviderParser.parse(providerClass);
+          // Validate provider class format (parsing validates the format)
+          ProviderParser.parse(providerClass);
           // We can't instantiate without the actual class, but we can register the factory
           // The module needs to provide the factory function
           // This is a limitation of Dart - we need the actual class imported
