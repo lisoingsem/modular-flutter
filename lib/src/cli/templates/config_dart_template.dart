@@ -45,4 +45,3 @@ class Config {
     return Map<String, dynamic>.from(_loadConfig());
   }
 }
-

@@ -14,8 +14,7 @@ class EnableCommand implements Command {
     }
 
     final moduleName = arguments[0];
-    final statusesPath =
-        path.join(Directory.current.path, 'modules.json');
+    final statusesPath = path.join(Directory.current.path, 'modules.json');
 
     try {
       // Load current statuses
@@ -38,15 +37,16 @@ class EnableCommand implements Command {
 
       print('Module "$moduleName" enabled successfully!');
       print('Status saved to: $statusesPath');
-      
+
       // Auto-regenerate modules.dart if it exists
-      final modulesPath = path.join(Directory.current.path, 'lib', 'app', 'modules.dart');
+      final modulesPath =
+          path.join(Directory.current.path, 'lib', 'app', 'modules.dart');
       if (File(modulesPath).existsSync()) {
         print('Regenerating modules.dart...');
         final buildCommand = BuildCommand();
         await buildCommand.run([]);
       }
-      
+
       return 0; // ExitCode.success
     } catch (e) {
       print('Error enabling module: $e');

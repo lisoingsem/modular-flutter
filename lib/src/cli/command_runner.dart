@@ -67,6 +67,7 @@ class CommandRunner {
     print('');
     print('Available commands:');
     print('  create <name>              Create a new module');
+    print('                             Options: --force, --submodule');
     print('  make:widget <name>         Generate a widget');
     print('  make:service <name>        Generate a service');
     print('  make:route <name>          Generate a route');
@@ -79,7 +80,8 @@ class CommandRunner {
     print('  exec -- <command>          Execute command across modules');
     print('  publish <name>             Publish module assets/config');
     print('  install <package>          Install module from pub.dev/git/path');
-    print('  build                     Generate modules.dart with auto-registration');
+    print(
+        '  build                     Generate modules.dart with auto-registration');
     print('');
     print('Options:');
     print('  --module=<name>            Specify module for make commands');

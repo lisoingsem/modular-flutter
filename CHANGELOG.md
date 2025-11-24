@@ -2,48 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
-
-## [0.1.2] - 2024-11-25
+## [0.1.3] - 2025-11-25
 
 ### Added
-- Auto-discovery and code generation for module providers
-- `build` command to generate `modules.dart` with auto-registration
-- Automatic provider registration from `module.yaml` files
-- Auto-regeneration of `modules.dart` after create/enable/disable commands
+- Git submodules support via `--submodule` flag in `create` command
+- `GIT_SUBMODULES.md` documentation for managing modules as git submodules
+- Helper script generation for connecting modules as submodules
+- Auto-initialization of git repositories in modules when using `--submodule` flag
 
 ### Changed
-- Renamed `modules_statuses.json` to `modules.json` (simpler naming)
-- Module discovery now follows Laravel Modules pattern (zero-configuration)
-- Simplified main app usage - no manual provider registration needed
+- Updated CLI help text to include `--submodule` option
+- Improved module creation workflow with git submodule support
 
-### Fixed
-- Module discovery now properly handles both `packages/` and `modules/` directories
+## [0.1.2] - 2025-11-24
 
-## [0.1.1] - 2024-12-19
+### Added
+- Code generation for `modules.dart` with auto-registration
+- `build` command to generate provider registration code
+- Auto-regeneration of `modules.dart` after module create/enable/disable
+
+## [0.1.1] - 2025-11-24
 
 ### Changed
-- Updated copyright to Krup Yang
-- Updated author information
+- Renamed `modules_statuses.json` to `modules.json` for cleaner naming
+- Updated documentation
 
-## [0.1.0] - 2024-11-25
+## [0.1.0] - 2025-11-24
 
 ### Added
 - Initial release
-- Module discovery and registration
-- Module enable/disable functionality
+- Module discovery and management
+- CLI commands for module operations
 - Service provider pattern
 - Route registration
-- Asset and localization loading
-- CLI tool for module generation
-- Module repository and registry
-- Priority-based module loading
-- Module dependency validation
-- Configuration system (Laravel-style)
-- Auto-discovery from pub.dev packages
-- Localization support (ARB, JSON, YAML)
-- Module publishing and customization
-
+- Configuration system
+- Localization support

@@ -8,4 +8,3 @@ void main(List<String> arguments) async {
   final exitCode = await runner.run(arguments);
   exit(exitCode);
 }
-

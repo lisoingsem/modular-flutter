@@ -4,7 +4,8 @@ import '../templates/module_templates.dart';
 
 /// Generator for module config files
 class ConfigGenerator {
-  Future<void> generate(String configName, String moduleName, {bool force = false}) async {
+  Future<void> generate(String configName, String moduleName,
+      {bool force = false}) async {
     final modulesPath = path.join(Directory.current.path, 'modules');
     final modulePath = path.join(modulesPath, moduleName);
     final configPath = path.join(modulePath, 'lib', 'config');

@@ -4,8 +4,13 @@ import '../templates/module_templates.dart';
 
 class ModuleGenerator {
   Future<void> generate(String moduleName, {bool force = false}) async {
+    // Check for packages/ first (monorepo style), then modules/ (traditional)
+    final packagesPath = path.join(Directory.current.path, 'packages');
     final modulesPath = path.join(Directory.current.path, 'modules');
-    final modulePath = path.join(modulesPath, moduleName);
+    final basePath =
+        Directory(packagesPath).existsSync() ? packagesPath : modulesPath;
+
+    final modulePath = path.join(basePath, moduleName);
     final moduleDir = Directory(modulePath);
 
     // Check if module already exists

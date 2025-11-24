@@ -18,7 +18,7 @@ class BuildCommand implements Command {
       }
 
       print('Generating modules.dart...');
-      
+
       // Try to detect modules path (packages or modules directory)
       String? modulesPath;
       if (Directory(path.join(projectRoot, 'packages')).existsSync()) {
@@ -26,7 +26,7 @@ class BuildCommand implements Command {
       } else if (Directory(path.join(projectRoot, 'modules')).existsSync()) {
         modulesPath = 'modules';
       }
-      
+
       final generator = ModuleCodeGenerator(
         projectRoot: projectRoot,
         localModulesPath: modulesPath,
