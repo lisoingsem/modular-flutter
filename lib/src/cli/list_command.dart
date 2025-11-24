@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:flutter_modules/src/module_filter.dart';
-import 'package:flutter_modules/src/module_repository.dart';
+import 'package:flutter_modular/src/module_filter.dart';
+import 'package:flutter_modular/src/module_repository.dart';
 import 'command.dart';
 
 class ListCommand implements Command {

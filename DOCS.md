@@ -1,6 +1,6 @@
-# Flutter Modules Documentation
+# Flutter Modular Documentation
 
-Complete guide for using Flutter Modules.
+Complete guide for using Flutter Modular.
 
 > **Note:** This package is inspired by [Laravel Modules](https://github.com/nwidart/laravel-modules). Many concepts and patterns are adapted from Laravel's modular architecture system.
 
@@ -18,13 +18,13 @@ Complete guide for using Flutter Modules.
 
 ```yaml
 dependencies:
-  flutter_modules: ^0.1.0
+  flutter_modular: ^0.1.0
 ```
 
 ### Basic Usage
 
 ```dart
-import 'package:flutter_modules/flutter_modules.dart';
+import 'package:flutter_modular/flutter_modular.dart';
 
 void main() {
   final registry = ModuleRegistry();
@@ -45,7 +45,7 @@ void main() {
 ### Create Module
 
 ```bash
-dart run flutter_modules create Auth
+dart run flutter_modular create Auth
 ```
 
 ## CLI Commands
@@ -54,42 +54,42 @@ dart run flutter_modules create Auth
 
 ```bash
 # Create module
-dart run flutter_modules create Auth
+dart run flutter_modular create Auth
 
 # Enable/disable
-dart run flutter_modules enable Auth
-dart run flutter_modules disable Payment
+dart run flutter_modular enable Auth
+dart run flutter_modular disable Payment
 
 # List modules
-dart run flutter_modules list
-dart run flutter_modules list --enabled
-dart run flutter_modules list --format=json
+dart run flutter_modular list
+dart run flutter_modular list --enabled
+dart run flutter_modular list --format=json
 ```
 
 ### Code Generation
 
 ```bash
 # Generate components
-dart run flutter_modules make:widget Login --module=Auth
-dart run flutter_modules make:service AuthService --module=Auth
-dart run flutter_modules make:route Login --module=Auth
-dart run flutter_modules make:provider AuthProvider --module=Auth
-dart run flutter_modules make:config api --module=Auth
+dart run flutter_modular make:widget Login --module=Auth
+dart run flutter_modular make:service AuthService --module=Auth
+dart run flutter_modular make:route Login --module=Auth
+dart run flutter_modular make:provider AuthProvider --module=Auth
+dart run flutter_modular make:config api --module=Auth
 ```
 
 ### Advanced
 
 ```bash
 # Execute commands across modules
-dart run flutter_modules exec -- "flutter test"
-dart run flutter_modules exec --scope=auth* --concurrency=5 -- "flutter test"
+dart run flutter_modular exec -- "flutter test"
+dart run flutter_modular exec --scope=auth* --concurrency=5 -- "flutter test"
 
 # Publish module assets/config
-dart run flutter_modules publish Auth --tag=config
+dart run flutter_modular publish Auth --tag=config
 
 # Install from pub.dev/git/path
-dart run flutter_modules install auth_module
-dart run flutter_modules install auth_module --git=https://github.com/user/repo.git
+dart run flutter_modular install auth_module
+dart run flutter_modular install auth_module --git=https://github.com/user/repo.git
 ```
 
 ## Configuration
@@ -122,7 +122,7 @@ features:
 Publish config to customize:
 
 ```bash
-dart run flutter_modules publish Auth --tag=config
+dart run flutter_modular publish Auth --tag=config
 # Edit config/modules/auth/config.yaml
 ```
 
@@ -191,7 +191,7 @@ class AuthServiceProvider extends ModuleProvider {
 ### Create Publishable Module
 
 ```bash
-dart run flutter_modules create Auth
+dart run flutter_modular create Auth
 # Module includes pubspec.yaml automatically
 ```
 
@@ -208,7 +208,7 @@ Modules from pub.dev are automatically discovered:
 
 ```bash
 # Install module
-dart run flutter_modules install auth_module
+dart run flutter_modular install auth_module
 
 # Or add to pubspec.yaml
 dependencies:
@@ -223,7 +223,7 @@ final modules = repository.all(); // auth_module included!
 
 ```bash
 # Publish config for customization
-dart run flutter_modules publish auth_module --tag=config
+dart run flutter_modular publish auth_module --tag=config
 
 # Edit config/modules/auth_module/config.yaml
 # Your app uses the customized config!
@@ -244,7 +244,7 @@ modules/Auth/
 │   ├── models/              # Data models
 │   └── config/              # Configuration
 ├── assets/                  # Module assets
-├── l10n/                    # Localizations
+├── lang/                    # Localizations
 └── test/                    # Module tests
 ```
 

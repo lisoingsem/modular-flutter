@@ -4,7 +4,7 @@
 
 set -e  # Exit on error
 
-echo "🚀 Preparing flutter_modules for publishing..."
+echo "🚀 Preparing flutter_modular for publishing..."
 echo ""
 
 # Colors for output
@@ -51,8 +51,8 @@ echo ""
 # Step 5: Test CLI
 echo -e "${YELLOW}🔧 Testing CLI commands...${NC}"
 echo "Creating test module..."
-dart run flutter_modules create TestModule --force 2>/dev/null || true
-dart run flutter_modules list > /dev/null 2>&1 && echo -e "${GREEN}✅ CLI works${NC}" || echo -e "${YELLOW}⚠️  CLI test skipped (modules directory may not exist)${NC}"
+dart run flutter_modular create TestModule --force 2>/dev/null || true
+dart run flutter_modular list > /dev/null 2>&1 && echo -e "${GREEN}✅ CLI works${NC}" || echo -e "${YELLOW}⚠️  CLI test skipped (modules directory may not exist)${NC}"
 # Cleanup
 rm -rf modules/TestModule 2>/dev/null || true
 rm -f modules_statuses.json 2>/dev/null || true

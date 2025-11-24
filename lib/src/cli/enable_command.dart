@@ -8,7 +8,7 @@ class EnableCommand implements Command {
   Future<int> run(List<String> arguments) async {
     if (arguments.isEmpty) {
       print('Error: Module name is required');
-      print('Usage: flutter_modules enable <name>');
+      print('Usage: flutter_modular enable <name>');
       return 64; // ExitCode.usage
     }
 

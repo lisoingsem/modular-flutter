@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_modules/flutter_modules.dart';
+import 'package:flutter_modular/flutter_modular.dart';
 
 void main() {
   group('RouteRegistry', () {

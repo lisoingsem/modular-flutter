@@ -9,14 +9,14 @@ class InstallCommand implements Command {
   Future<int> run(List<String> arguments) async {
     if (arguments.isEmpty) {
       print('Error: Module package name is required');
-      print('Usage: flutter_modules install <package> [options]');
+      print('Usage: flutter_modular install <package> [options]');
       print('');
       print('Examples:');
-      print('  flutter_modules install my_module');
-      print('  flutter_modules install my_module --version=1.0.0');
-      print('  flutter_modules install my_module --path=../my_module');
+      print('  flutter_modular install my_module');
+      print('  flutter_modular install my_module --version=1.0.0');
+      print('  flutter_modular install my_module --path=../my_module');
       print(
-          '  flutter_modules install my_module --git=https://github.com/user/repo.git');
+          '  flutter_modular install my_module --git=https://github.com/user/repo.git');
       return 64;
     }
 

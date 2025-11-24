@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'package:flutter_modules/src/module_repository.dart';
-import 'package:flutter_modules/src/module_filter.dart';
-import 'package:flutter_modules/src/module.dart';
+import 'package:flutter_modular/src/module_repository.dart';
+import 'package:flutter_modular/src/module_filter.dart';
+import 'package:flutter_modular/src/module.dart';
 import 'command.dart';
 
 /// Execute command across filtered modules (inspired by Melos exec)
@@ -10,7 +10,7 @@ class ExecCommand implements Command {
   Future<int> run(List<String> arguments) async {
     if (arguments.isEmpty) {
       print('Error: Command is required');
-      print('Usage: flutter_modules exec -- <command>');
+      print('Usage: flutter_modular exec -- <command>');
       print('');
       print('Options:');
       print('  --scope=<glob>        Include only modules matching glob');

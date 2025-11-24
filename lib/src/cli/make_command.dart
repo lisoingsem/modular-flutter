@@ -10,7 +10,7 @@ class MakeCommand implements Command {
   Future<int> run(List<String> arguments) async {
     if (arguments.isEmpty) {
       print('Error: Name is required');
-      print('Usage: flutter_modules make:$type <name> --module=<module>');
+      print('Usage: flutter_modular make:$type <name> --module=<module>');
       return 64; // ExitCode.usage
     }
 
@@ -26,7 +26,7 @@ class MakeCommand implements Command {
 
     if (moduleName == null) {
       print('Error: --module option is required');
-      print('Usage: flutter_modules make:$type <name> --module=<module>');
+      print('Usage: flutter_modular make:$type <name> --module=<module>');
       return 64; // ExitCode.usage
     }
 

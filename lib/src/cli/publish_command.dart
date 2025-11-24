@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:path/path.dart' as path;
-import '../../flutter_modules.dart';
+import '../../flutter_modular.dart';
 import 'command.dart';
 
 /// Command to publish module assets/config to the application
@@ -10,7 +10,7 @@ class PublishCommand implements Command {
   Future<int> run(List<String> arguments) async {
     if (arguments.isEmpty) {
       print('Error: Module name is required');
-      print('Usage: flutter_modules publish <module> [--tag=<tag>] [--force]');
+      print('Usage: flutter_modular publish <module> [--tag=<tag>] [--force]');
       print('');
       print('Tags:');
       print('  assets    - Publish module assets');

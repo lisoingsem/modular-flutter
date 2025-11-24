@@ -1,5 +1,5 @@
-/// Flutter Modules - A modular architecture system for Flutter applications
-library flutter_modules;
+/// Flutter Modular - A modular architecture system for Flutter applications
+library flutter_modular;
 
 export 'src/module.dart';
 export 'src/module_repository.dart';
