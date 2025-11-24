@@ -1,0 +1,27 @@
+name: flutter_modules
+description: A Flutter package for managing modular architecture, inspired by Laravel Modules (nwidart/laravel-modules)
+version: 0.1.0
+homepage: https://github.com/lisoingsem/flutter-modules.git
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  yaml: ^3.1.2
+  path: ^1.9.0
+  meta: ^1.11.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+executables:
+  flutter_modules: flutter_modules
+
+flutter:
+  uses-material-design: true
+

@@ -1,0 +1,43 @@
+# Build artifacts
+.dart_tool/
+build/
+coverage/
+*.iml
+*.ipr
+*.iws
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Example apps (exclude from package)
+example_flutter_modules/
+example/
+
+# Development documentation (optional - include if you want)
+# PUBLISHING.md
+# BUILD_AND_PUBLISH.md
+# QUICK_START.md
+
+# CI/CD
+.github/
+.git/
+.gitignore
+
+# Test coverage
+coverage/
+
+# Temporary files
+*.tmp
+*.log
+*.swp
+*~
+
+# Module test files (keep test/ directory but exclude generated modules)
+modules/
+modules_statuses.json
+
