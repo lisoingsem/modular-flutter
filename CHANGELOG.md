@@ -2,36 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
-
-## [0.1.2] - 2025-11-25
+## [0.2.0] - 2024-12-XX
 
 ### Added
-- Git submodules support via `--submodule` flag in `create` command
-- `GIT_SUBMODULES.md` documentation for managing modules as git submodules
-- Helper script generation for connecting modules as submodules
-- Auto-initialization of git repositories in modules when using `--submodule` flag
-- Code generation for `modules.dart` with auto-registration
-- `build` command to generate provider registration code
-- Auto-regeneration of `modules.dart` after module create/enable/disable
+- **ModularApp widget** - Simplified app wrapper that auto-discovers and registers everything
+- **Auto-discovery** - Automatically discovers modules from `packages/` or `modules/` directories
+- **Zero configuration** - No manual setup needed, just like Laravel Modules
+- **Route builder** - `buildRoutesFromRegistry()` helper function
+- **Auto path discovery** - Automatically detects modules path without configuration
+
+### Improved
+- **Simplified main.dart** - Minimal setup required, everything auto-discovered
+- **Better documentation** - Clear examples showing Laravel Modules-like usage
+- **Code generation** - Improved `modules.dart` generation with better error handling
 
 ### Changed
-- Updated CLI help text to include `--submodule` option
-- Improved module creation workflow with git submodule support
+- **ModularApp API** - Now handles all registration and booting automatically
+- **Module discovery** - More robust path detection (packages/ or modules/)
 
-## [0.1.1] - 2025-11-24
+## [0.1.2] - 2024-12-XX
 
-### Changed
-- Renamed `modules_statuses.json` to `modules.json` for cleaner naming
-- Updated documentation
+### Added
+- Auto-sync `pubspec.yaml` with discovered modules
+- Support for `pubspec.yaml.base` to keep modules out of git
+- Git hooks for automatic syncing after pull/merge
+- `.gitattributes` with merge strategies
 
-## [0.1.0] - 2025-11-24
+### Fixed
+- Module discovery in `packages/` and `modules/` directories
+- Provider registration from `module.yaml` files
+
+## [0.1.1] - 2024-12-XX
 
 ### Added
 - Initial release
-- Module discovery and management
-- CLI commands for module operations
-- Service provider pattern
+- Module discovery and registration
+- Provider auto-registration
 - Route registration
-- Configuration system
 - Localization support
+- CLI commands for module management

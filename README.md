@@ -6,230 +6,135 @@ A powerful Flutter package for managing modular architecture. Organize your Flut
 
 ## Features
 
-- **Module Discovery**: Automatically discover and load modules from the `modules/` directory
+- **Auto-Discovery**: Automatically discovers modules from `packages/` or `modules/` directory
+- **Auto-Sync**: Automatically updates `pubspec.yaml` with discovered modules (no manual editing!)
 - **Module Management**: Enable/disable modules dynamically with JSON configuration
 - **Service Providers**: Register services and dependencies per module
 - **Route Registration**: Register routes from modules automatically
-- **Asset Loading**: Load assets from modules
-- **Localization Support**: Load localizations from modules
-- **Priority-based Loading**: Control module loading order
-- **Dependency Management**: Define module dependencies
-- **Advanced Filtering**: Filter modules by name pattern, status, dependencies
-- **Exec Command**: Execute commands across multiple modules with concurrency
-- **Multiple Output Formats**: Table, JSON, and simple list formats
-- **Configuration System**: Laravel-style config files for modules
-- **Auto-Discovery**: Automatically discover modules from pub.dev packages
-- **Localization Support**: Module-based i18n with ARB files (only enabled modules)
-
-## Installation
-
-Add to your `pubspec.yaml`:
-
-```yaml
-dependencies:
-  modular_flutter: ^0.1.0
-```
-
-Then run:
-
-```bash
-flutter pub get
-```
+- **Code Generation**: Auto-generates `modules.dart` with provider registration
+- **Git Submodules**: Support for managing modules as git submodules
 
 ## Quick Start
 
-### 1. Generate Auto-Registration Code
+### 1. Install
 
-First, generate the `modules.dart` file that auto-discovers and registers all providers:
+```bash
+flutter pub add modular_flutter
+```
+
+### 2. Create Modules
+
+```bash
+dart run modular_flutter create Auth
+dart run modular_flutter create Catalog
+```
+
+### 3. Auto-Sync & Build
 
 ```bash
 dart run modular_flutter build
 ```
 
-This scans all modules, reads their `module.yaml` files, and generates `lib/app/modules.dart` with automatic provider registration.
+This command:
+- ✅ Auto-discovers all modules in `packages/`
+- ✅ Auto-updates `pubspec.yaml` with module dependencies
+- ✅ Generates `lib/app/modules.dart` with provider registration
 
-### 2. Initialize Module Registry
+### 4. Use in Your App
 
 ```dart
+import 'package:flutter/material.dart';
 import 'package:modular_flutter/modular_flutter.dart';
-import 'app/modules.dart'; // Auto-generated file
+import 'app/modules.dart'; // Auto-generated!
 
 void main() {
-  // Option 1: Use default (checks 'packages' then 'modules' directories)
-  final registry = ModuleRegistry();
-  
-  // Option 2: Specify custom modules directory
-  // final registry = ModuleRegistry(
-  //   repository: ModuleRepository(localModulesPath: 'packages'),
-  // );
-  
-  // Auto-register all enabled modules and their providers
-  // This reads module.yaml from each module and registers providers automatically
-  registerAllModules(registry);
-  
-  // Register and boot modules
+  final registry = ModuleRegistry(
+    repository: ModuleRepository(localModulesPath: 'packages'),
+  );
+
+  registerAllModules(registry); // Auto-registers all providers
   registry.register();
   registry.boot();
-  
+
   runApp(MyApp());
 }
 ```
 
-**That's it!** No manual provider registration needed. The generated `modules.dart` handles everything automatically, just like Laravel Modules.
+## Why pubspec.yaml?
 
-### 2. Create a Module
+**Flutter requires all dependencies to be declared in `pubspec.yaml`** - this is a Flutter/Dart package system requirement. There's no way around it.
 
-```bash
-dart run modular_flutter create Auth
-```
+However, **you never need to edit it manually!** The `build` command automatically:
+- Scans `packages/` directory
+- Reads each module's `pubspec.yaml`
+- Auto-adds them to your main `pubspec.yaml`
 
-### 3. Generate Components
+Just run `dart run modular_flutter build` whenever you add a new module.
 
-```bash
-# Generate a widget
-dart run modular_flutter make:widget Login --module=Auth
+## Make It Automatic
 
-# Generate a service
-dart run modular_flutter make:service AuthService --module=Auth
+### Option 1: Pre-build Hook (Recommended)
 
-# Generate a route
-dart run modular_flutter make:route Login --module=Auth
-```
-
-### 4. Manage Modules
+Create a script that runs before `flutter pub get`:
 
 ```bash
-# Enable a module
-dart run modular_flutter enable Auth
-
-# Disable a module
-dart run modular_flutter disable Payment
-
-# List all modules
-dart run modular_flutter list
-
-# Regenerate modules.dart (auto-registration code)
+#!/bin/bash
+# scripts/pre_build.sh
 dart run modular_flutter build
+flutter pub get
 ```
 
-**Note:** The `build` command is automatically run after `create`, `enable`, and `disable` commands if `modules.dart` already exists.
-
-## Advanced Features
-
-### Filter Modules
-
+Then use:
 ```bash
-# List only enabled modules
-dart run modular_flutter list --enabled
-
-# Filter by name pattern
-dart run modular_flutter list --scope=auth*
-
-# JSON output for scripting
-dart run modular_flutter list --format=json
+./scripts/pre_build.sh
+flutter run
 ```
 
-### Execute Commands Across Modules
+### Option 2: Git Hook
 
+Add to `.git/hooks/pre-commit`:
 ```bash
-# Run tests in all modules
-dart run modular_flutter exec -- "flutter test"
-
-# With filtering
-dart run modular_flutter exec --scope=auth* -- "flutter test"
-
-# With concurrency
-dart run modular_flutter exec --concurrency=5 -- "flutter test"
-
-# Fail fast on errors
-dart run modular_flutter exec --fail-fast -- "flutter test"
+#!/bin/bash
+dart run modular_flutter build
+git add pubspec.yaml lib/app/modules.dart
 ```
 
-### Module Status Configuration
+### Option 3: IDE Task
 
-Module status is stored in `modules.json`:
-
-```json
-{
-  "auth": true,
-  "payment": false,
-  "shipping": true
-}
-```
-
-You can edit this file manually or use CLI commands - both work!
+Configure your IDE to run `dart run modular_flutter build` before running the app.
 
 ## Module Structure
 
-Each module follows this structure:
-
 ```
-modules/Auth/
-├── module.yaml              # Module metadata
-├── lib/
-│   ├── auth_module.dart     # Module exports
-│   ├── widgets/             # UI components
-│   ├── services/            # Business logic
-│   ├── routes/              # Route definitions
-│   ├── providers/           # State management
-│   ├── models/              # Data models
-│   └── config/              # Configuration
-├── assets/                  # Module assets
-├── lang/                    # Localizations (en.arb, es.json, etc.)
-└── test/                    # Module tests
+packages/
+  auth/
+    lib/
+      providers/
+        auth_service_provider.dart
+      routes/
+        auth_route.dart
+    module.yaml
+    pubspec.yaml
 ```
 
 ## CLI Commands
 
-- `create <name>` - Create a new module
-- `make:widget <name> --module=<module>` - Generate a widget
-- `make:service <name> --module=<module>` - Generate a service
-- `make:route <name> --module=<module>` - Generate a route
-- `make:provider <name> --module=<module>` - Generate a state provider
-- `make:config <name> --module=<module>` - Generate a config file
-- `enable <name>` - Enable a module
-- `disable <name>` - Disable a module
-- `list [--format=table|json|simple]` - List modules
-- `exec -- <command>` - Execute command across modules
-- `publish <name> [--tag=assets|config]` - Publish module assets/config
-- `install <package> [--version|--path|--git]` - Install module from pub.dev/git/path
-
-## Configuration System
-
-Similar to Laravel's config system:
-
-```dart
-final module = repository.get('Auth');
-
-// Get config value (like config('auth.key') in Laravel)
-final apiUrl = module.config.get<String>('config.api_url');
-final timeout = module.config.get<int>('config.timeout', 30);
-```
-
-See [CONFIG_GUIDE.md](CONFIG_GUIDE.md) for detailed configuration guide.
-
-## Publishing & Customization
-
-Modules can be published to pub.dev and easily customized:
-
 ```bash
-# Publish module config for customization
-dart run modular_flutter publish Auth --tag=config
+# Create module
+dart run modular_flutter create <name> [--submodule]
 
-# Install module from pub.dev
-dart run modular_flutter install auth_module
+# Auto-sync pubspec.yaml & generate modules.dart
+dart run modular_flutter build
+
+# Enable/disable modules
+dart run modular_flutter enable <name>
+dart run modular_flutter disable <name>
+
+# List modules
+dart run modular_flutter list
 ```
-
-See [PUBLISHING_MODULES.md](PUBLISHING_MODULES.md) for detailed guide.
 
 ## Documentation
 
-- [DOCS.md](DOCS.md) - Complete documentation (CLI, config, localization, publishing)
-
-## Credits
-
-This package is inspired by and adapted from [nwidart/laravel-modules](https://github.com/nwidart/laravel-modules), bringing Laravel's powerful modular architecture patterns to Flutter.
-
-## License
-
-MIT
+- [Git Submodules Guide](GIT_SUBMODULES.md)
+- [Full Documentation](DOCS.md)
