@@ -31,7 +31,8 @@ class MakeConfigCommand implements Command {
     try {
       final generator = ConfigGenerator();
       await generator.generate(configName, moduleName, force: force);
-      print('Config "$configName" created successfully in module "$moduleName"!');
+      print(
+          'Config "$configName" created successfully in module "$moduleName"!');
       return 0;
     } catch (e) {
       print('Error creating config: $e');
@@ -39,4 +40,3 @@ class MakeConfigCommand implements Command {
     }
   }
 }
-
