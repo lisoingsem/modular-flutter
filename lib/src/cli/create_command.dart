@@ -1,4 +1,7 @@
+import 'dart:io';
+import 'package:path/path.dart' as path;
 import '../cli/generators/module_generator.dart';
+import 'commands/build_command.dart';
 import 'command.dart';
 
 class CreateCommand implements Command {
@@ -17,6 +20,15 @@ class CreateCommand implements Command {
       final generator = ModuleGenerator();
       await generator.generate(moduleName, force: force);
       print('Module "$moduleName" created successfully!');
+      
+      // Auto-regenerate modules.dart if it exists
+      final modulesPath = path.join(Directory.current.path, 'lib', 'app', 'modules.dart');
+      if (File(modulesPath).existsSync()) {
+        print('Regenerating modules.dart...');
+        final buildCommand = BuildCommand();
+        await buildCommand.run([]);
+      }
+      
       return 0;
     } catch (e) {
       print('Error creating module: $e');

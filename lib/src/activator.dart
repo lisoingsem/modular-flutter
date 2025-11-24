@@ -34,7 +34,7 @@ class FileActivator implements Activator {
 
   FileActivator({String? statusesFilePath})
       : statusesFilePath = statusesFilePath ??
-            path.join(Directory.current.path, 'modules_statuses.json') {
+            path.join(Directory.current.path, 'modules.json') {
     _loadStatuses();
   }
 

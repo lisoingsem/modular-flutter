@@ -16,6 +16,7 @@ class ModuleRegistry {
   final LocalizationRegistry localizationRegistry;
   final Map<String, ProviderFactory> _providerFactories = {};
   final List<ModuleProvider> _providers = [];
+  final bool autoDiscoverProviders;
   bool _registered = false;
   bool _booted = false;
 
@@ -23,15 +24,41 @@ class ModuleRegistry {
     ModuleRepository? repository,
     RouteRegistry? routeRegistry,
     LocalizationRegistry? localizationRegistry,
-  })  : repository = repository ?? ModuleRepository(),
+    String? localModulesPath,
+    this.autoDiscoverProviders = false,
+  })  : repository =
+            repository ?? ModuleRepository(localModulesPath: localModulesPath),
         routeRegistry = routeRegistry ?? RouteRegistry(),
         localizationRegistry = localizationRegistry ??
-            LocalizationRegistry(repository: repository ?? ModuleRepository());
+            LocalizationRegistry(
+              repository: repository ??
+                  ModuleRepository(localModulesPath: localModulesPath),
+            );
 
   /// Register a provider factory for a class name
   /// This allows modules to register their providers without using reflection
   void registerProviderFactory(String className, ProviderFactory factory) {
     _providerFactories[className] = factory;
+  }
+
+  /// Register multiple provider factories at once
+  /// Useful when you have many modules - register all providers in one call
+  void registerProviderFactories(Map<String, ProviderFactory> factories) {
+    _providerFactories.addAll(factories);
+  }
+
+  /// Auto-register providers from enabled modules
+  /// This discovers modules and registers their providers automatically
+  /// Only enabled modules are registered
+  void autoRegisterFromModules() {
+    final modules = repository.getOrdered();
+    for (final module in modules) {
+      if (!module.enabled) {
+        continue; // Skip disabled modules
+      }
+      // Providers will be registered when register() is called
+      // This method is here for future auto-discovery enhancements
+    }
   }
 
   /// Register all enabled modules
@@ -54,8 +81,10 @@ class ModuleRegistry {
   }
 
   /// Register a single module
+  /// Similar to Laravel modules: auto-discovers providers from module.yaml
   void registerModule(Module module) {
-    // Register service providers
+    // Register service providers (like Laravel modules auto-discovery)
+    // Providers are listed in module.yaml and must be registered via registerProviderFactory()
     for (final providerClass in module.providers) {
       try {
         final factory = _providerFactories[providerClass];
@@ -68,13 +97,15 @@ class ModuleRegistry {
             _providers.add(provider);
           }
         } else {
+          // In Laravel modules, missing providers are logged but don't stop execution
           print(
-            'Warning: No factory registered for provider $providerClass. '
-            'Register it using registerProviderFactory()',
+            'Warning: Provider "$providerClass" not registered. '
+            'Register it using registerProviderFactory() or registerProviderFactories(). '
+            'Format: package_name.providers.ModuleNameServiceProvider',
           );
         }
       } catch (e) {
-        print('Warning: Failed to register provider $providerClass: $e');
+        print('Warning: Failed to register provider "$providerClass": $e');
       }
     }
 

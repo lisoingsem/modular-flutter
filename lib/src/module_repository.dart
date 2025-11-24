@@ -11,12 +11,14 @@ class ModuleRepository {
   final String modulesPath;
   final Activator activator;
   final bool autoDiscoverPackages;
+  final String? localModulesPath;
   Map<String, Module>? _modules;
 
   ModuleRepository({
     String? modulesPath,
     Activator? activator,
     this.autoDiscoverPackages = true,
+    this.localModulesPath,
   })  : modulesPath =
             modulesPath ?? path.join(Directory.current.path, 'modules'),
         activator = activator ?? FileActivator() {
@@ -49,7 +51,9 @@ class ModuleRepository {
     // Discover modules from all sources
     final discoveredModules = autoDiscoverPackages
         ? PackageDiscovery.discoverFromPackages(
-            projectRoot: Directory.current.path)
+            projectRoot: Directory.current.path,
+            activator: activator,
+            localModulesPath: localModulesPath)
         : _scanLocalModules();
 
     // Process discovered modules

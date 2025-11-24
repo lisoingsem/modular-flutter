@@ -7,6 +7,7 @@ import 'list_command.dart';
 import 'exec_command.dart';
 import 'publish_command.dart';
 import 'install_command.dart';
+import 'commands/build_command.dart';
 import 'command.dart';
 
 /// Main command runner for modular_flutter CLI
@@ -30,6 +31,7 @@ class CommandRunner {
     _commands['exec'] = ExecCommand();
     _commands['publish'] = PublishCommand();
     _commands['install'] = InstallCommand();
+    _commands['build'] = BuildCommand();
   }
 
   Future<int> run(List<String> arguments) async {
@@ -69,6 +71,7 @@ class CommandRunner {
     print('  make:service <name>        Generate a service');
     print('  make:route <name>          Generate a route');
     print('  make:provider <name>       Generate a state provider');
+    print('  make:service-provider <name> Generate a module service provider');
     print('  make:config <name>         Generate a config file');
     print('  enable <name>              Enable a module');
     print('  disable <name>             Disable a module');
@@ -76,6 +79,7 @@ class CommandRunner {
     print('  exec -- <command>          Execute command across modules');
     print('  publish <name>             Publish module assets/config');
     print('  install <package>          Install module from pub.dev/git/path');
+    print('  build                     Generate modules.dart with auto-registration');
     print('');
     print('Options:');
     print('  --module=<name>            Specify module for make commands');

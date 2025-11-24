@@ -77,6 +77,21 @@ class FileGenerator {
             modulePath, 'lib', 'providers', '${snakeName}_provider.dart');
         break;
 
+      case 'service-provider':
+        // Remove "ServiceProvider" suffix if present to avoid duplication
+        final cleanName = name.replaceAll(
+            RegExp(r'ServiceProvider$', caseSensitive: false), '');
+        final cleanSnakeName = _toSnakeCase(cleanName);
+        final cleanStudlyName = _toStudlyCase(cleanName);
+        content = ModuleTemplates.serviceProvider(
+          name: cleanName,
+          alias: cleanSnakeName,
+          studlyName: cleanStudlyName,
+        );
+        filePath = path.join(modulePath, 'lib', 'providers',
+            '${cleanSnakeName}_service_provider.dart');
+        break;
+
       default:
         throw Exception('Unknown type: $type');
     }

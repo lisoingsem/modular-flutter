@@ -1,8 +1,7 @@
 name: modular_flutter
 description: A Flutter package for managing modular architecture, inspired by Laravel Modules (nwidart/laravel-modules)
-version: 0.1.1
+version: 0.1.2
 homepage: https://github.com/lisoingsem/modular-flutter.git
-author: Lisoing Sem <lisoingsem@gmail.com>
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

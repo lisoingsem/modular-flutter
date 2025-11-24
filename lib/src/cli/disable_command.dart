@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'dart:convert';
+import 'commands/build_command.dart';
 import 'command.dart';
 
 class DisableCommand implements Command {
@@ -13,8 +14,7 @@ class DisableCommand implements Command {
     }
 
     final moduleName = arguments[0];
-    final statusesPath =
-        path.join(Directory.current.path, 'modules_statuses.json');
+    final statusesPath = path.join(Directory.current.path, 'modules.json');
 
     try {
       // Load current statuses
@@ -37,6 +37,16 @@ class DisableCommand implements Command {
 
       print('Module "$moduleName" disabled successfully!');
       print('Status saved to: $statusesPath');
+
+      // Auto-regenerate modules.dart if it exists
+      final modulesPath =
+          path.join(Directory.current.path, 'lib', 'app', 'modules.dart');
+      if (File(modulesPath).existsSync()) {
+        print('Regenerating modules.dart...');
+        final buildCommand = BuildCommand();
+        await buildCommand.run([]);
+      }
+
       return 0; // ExitCode.success
     } catch (e) {
       print('Error disabling module: $e');

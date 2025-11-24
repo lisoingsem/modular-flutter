@@ -4,6 +4,8 @@ class ModuleTemplates {
     required String alias,
     required String studlyName,
   }) {
+    // Use package name (snake_case) like Laravel modules uses namespace
+    // Format: package_name.providers.ModuleNameServiceProvider
     return '''name: $name
 alias: $alias
 description: $studlyName module
@@ -11,10 +13,10 @@ version: 0.1.0
 priority: 999
 enabled: true
 providers:
-  - modules.$alias.providers.${alias}_service_provider
+  - $alias.providers.${studlyName}ServiceProvider
 routes:
   - path: /$alias
-    widget: modules.$alias.routes.${alias}_route
+    widget: $alias.routes.${studlyName}Route
 requires: []
 ''';
   }

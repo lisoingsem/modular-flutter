@@ -3,30 +3,57 @@ import 'dart:convert';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
 import 'module.dart';
+import 'activator.dart';
 
 /// Discovers modules from installed packages (pub.dev, git, path)
 /// Similar to Laravel's merge-plugin auto-discovery
 class PackageDiscovery {
   /// Discover modules from all installed packages
-  static List<Module> discoverFromPackages({String? projectRoot}) {
+  ///
+  /// [localModulesPath] - Custom path for local modules (default: checks 'packages' then 'modules')
+  static List<Module> discoverFromPackages({
+    String? projectRoot,
+    Activator? activator,
+    String? localModulesPath,
+  }) {
     final root = projectRoot ?? Directory.current.path;
     final discoveredModules = <Module>[];
 
-    // 1. Discover from local modules directory
-    final localModules = _discoverFromDirectory(
-      path.join(root, 'modules'),
-    );
-    discoveredModules.addAll(localModules);
+    // 1. Discover from custom local modules path (if specified)
+    if (localModulesPath != null) {
+      final customModules = _discoverFromDirectory(
+        path.isAbsolute(localModulesPath)
+            ? localModulesPath
+            : path.join(root, localModulesPath),
+        activator,
+      );
+      discoveredModules.addAll(customModules);
+    } else {
+      // 2. Discover from local packages directory (preferred for monorepo)
+      final packagesModules = _discoverFromDirectory(
+        path.join(root, 'packages'),
+        activator,
+      );
+      discoveredModules.addAll(packagesModules);
 
-    // 2. Discover from package dependencies
-    final packageModules = _discoverFromPackages(root);
+      // 3. Discover from local modules directory (fallback)
+      final modulesModules = _discoverFromDirectory(
+        path.join(root, 'modules'),
+        activator,
+      );
+      discoveredModules.addAll(modulesModules);
+    }
+
+    // 4. Discover from installed package dependencies
+    final packageModules = _discoverFromPackages(root, activator);
     discoveredModules.addAll(packageModules);
 
     return discoveredModules;
   }
 
   /// Discover modules from a directory
-  static List<Module> _discoverFromDirectory(String modulesPath) {
+  static List<Module> _discoverFromDirectory(
+      String modulesPath, Activator? activator) {
     final modulesDir = Directory(modulesPath);
     if (!modulesDir.existsSync()) {
       return [];
@@ -38,7 +65,11 @@ class PackageDiscovery {
         final moduleYaml = File(path.join(entity.path, 'module.yaml'));
         if (moduleYaml.existsSync()) {
           try {
-            modules.add(Module.fromPath(entity.path));
+            final module = Module.fromPath(entity.path);
+            // Only add if enabled (if activator is provided)
+            if (activator == null || activator.hasStatus(module, true)) {
+              modules.add(module);
+            }
           } catch (e) {
             print('Warning: Failed to load module at ${entity.path}: $e');
           }
@@ -49,7 +80,8 @@ class PackageDiscovery {
   }
 
   /// Discover modules from installed packages
-  static List<Module> _discoverFromPackages(String projectRoot) {
+  static List<Module> _discoverFromPackages(
+      String projectRoot, Activator? activator) {
     final modules = <Module>[];
 
     // Try to read package_config.json (Dart 2.17+)
@@ -80,7 +112,10 @@ class PackageDiscovery {
           // Check if this package is a module
           final module = _tryLoadModuleFromPackage(packagePath, packageName);
           if (module != null) {
-            modules.add(module);
+            // Only add if enabled (if activator is provided)
+            if (activator == null || activator.hasStatus(module, true)) {
+              modules.add(module);
+            }
           }
         }
       } catch (e) {

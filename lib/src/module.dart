@@ -90,7 +90,7 @@ class Module {
       final requires = (yaml['requires'] as List?)?.cast<String>() ?? [];
       final providers = (yaml['providers'] as List?)?.cast<String>() ?? [];
       final routes = (yaml['routes'] as List?)
-              ?.map((r) => r as Map<String, dynamic>)
+              ?.map((r) => Map<String, dynamic>.from(r as Map))
               .toList() ??
           [];
 

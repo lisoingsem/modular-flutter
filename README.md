@@ -38,19 +38,34 @@ flutter pub get
 
 ## Quick Start
 
-### 1. Initialize Module Registry
+### 1. Generate Auto-Registration Code
+
+First, generate the `modules.dart` file that auto-discovers and registers all providers:
+
+```bash
+dart run modular_flutter build
+```
+
+This scans all modules, reads their `module.yaml` files, and generates `lib/app/modules.dart` with automatic provider registration.
+
+### 2. Initialize Module Registry
 
 ```dart
 import 'package:modular_flutter/modular_flutter.dart';
+import 'app/modules.dart'; // Auto-generated file
 
 void main() {
+  // Option 1: Use default (checks 'packages' then 'modules' directories)
   final registry = ModuleRegistry();
   
-  // Register provider factories
-  registry.registerProviderFactory(
-    'modules.auth.providers.AuthServiceProvider',
-    (module) => AuthServiceProvider(module),
-  );
+  // Option 2: Specify custom modules directory
+  // final registry = ModuleRegistry(
+  //   repository: ModuleRepository(localModulesPath: 'packages'),
+  // );
+  
+  // Auto-register all enabled modules and their providers
+  // This reads module.yaml from each module and registers providers automatically
+  registerAllModules(registry);
   
   // Register and boot modules
   registry.register();
@@ -59,6 +74,8 @@ void main() {
   runApp(MyApp());
 }
 ```
+
+**That's it!** No manual provider registration needed. The generated `modules.dart` handles everything automatically, just like Laravel Modules.
 
 ### 2. Create a Module
 
@@ -90,7 +107,12 @@ dart run modular_flutter disable Payment
 
 # List all modules
 dart run modular_flutter list
+
+# Regenerate modules.dart (auto-registration code)
+dart run modular_flutter build
 ```
+
+**Note:** The `build` command is automatically run after `create`, `enable`, and `disable` commands if `modules.dart` already exists.
 
 ## Advanced Features
 
@@ -125,7 +147,7 @@ dart run modular_flutter exec --fail-fast -- "flutter test"
 
 ### Module Status Configuration
 
-Module status is stored in `modules_statuses.json`:
+Module status is stored in `modules.json`:
 
 ```json
 {

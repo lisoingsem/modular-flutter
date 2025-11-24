@@ -27,7 +27,13 @@ dependencies:
 import 'package:modular_flutter/modular_flutter.dart';
 
 void main() {
+  // Default: checks 'packages' then 'modules' directories
   final registry = ModuleRegistry();
+  
+  // Or specify custom path:
+  // final registry = ModuleRegistry(
+  //   repository: ModuleRepository(localModulesPath: 'packages'),
+  // );
   
   // Register provider factories
   registry.registerProviderFactory(
@@ -40,6 +46,23 @@ void main() {
   
   runApp(MyApp());
 }
+```
+
+### Module Discovery Paths
+
+By default, `modular_flutter` discovers modules from:
+1. `packages/` directory (preferred for monorepo setups)
+2. `modules/` directory (fallback)
+3. Installed package dependencies (from pub.dev, git, or path)
+
+You can customize the local modules path:
+
+```dart
+final registry = ModuleRegistry(
+  repository: ModuleRepository(
+    localModulesPath: 'packages', // or 'modules', 'src/modules', etc.
+  ),
+);
 ```
 
 ### Create Module
@@ -250,7 +273,7 @@ modules/Auth/
 
 ## Module Status
 
-Module status stored in `modules_statuses.json`:
+Module status stored in `modules.json`:
 
 ```json
 {
