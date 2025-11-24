@@ -9,7 +9,7 @@ import 'publish_command.dart';
 import 'install_command.dart';
 import 'command.dart';
 
-/// Main command runner for flutter_modular CLI
+/// Main command runner for modular_flutter CLI
 class CommandRunner {
   final Map<String, Command> _commands = {};
 
@@ -61,7 +61,7 @@ class CommandRunner {
   void _printUsage() {
     print('Flutter Modules CLI');
     print('');
-    print('Usage: flutter_modular <command> [arguments]');
+    print('Usage: modular_flutter <command> [arguments]');
     print('');
     print('Available commands:');
     print('  create <name>              Create a new module');

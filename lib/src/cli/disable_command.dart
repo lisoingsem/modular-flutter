@@ -8,7 +8,7 @@ class DisableCommand implements Command {
   Future<int> run(List<String> arguments) async {
     if (arguments.isEmpty) {
       print('Error: Module name is required');
-      print('Usage: flutter_modular disable <name>');
+      print('Usage: modular_flutter disable <name>');
       return 64; // ExitCode.usage
     }
 

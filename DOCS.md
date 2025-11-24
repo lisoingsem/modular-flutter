@@ -1,4 +1,4 @@
-# Flutter Modular Documentation
+# Modular Flutter Documentation
 
 Complete guide for using Flutter Modular.
 
@@ -18,13 +18,13 @@ Complete guide for using Flutter Modular.
 
 ```yaml
 dependencies:
-  flutter_modular: ^0.1.0
+  modular_flutter: ^0.1.0
 ```
 
 ### Basic Usage
 
 ```dart
-import 'package:flutter_modular/flutter_modular.dart';
+import 'package:modular_flutter/modular_flutter.dart';
 
 void main() {
   final registry = ModuleRegistry();
@@ -45,7 +45,7 @@ void main() {
 ### Create Module
 
 ```bash
-dart run flutter_modular create Auth
+dart run modular_flutter create Auth
 ```
 
 ## CLI Commands
@@ -54,42 +54,42 @@ dart run flutter_modular create Auth
 
 ```bash
 # Create module
-dart run flutter_modular create Auth
+dart run modular_flutter create Auth
 
 # Enable/disable
-dart run flutter_modular enable Auth
-dart run flutter_modular disable Payment
+dart run modular_flutter enable Auth
+dart run modular_flutter disable Payment
 
 # List modules
-dart run flutter_modular list
-dart run flutter_modular list --enabled
-dart run flutter_modular list --format=json
+dart run modular_flutter list
+dart run modular_flutter list --enabled
+dart run modular_flutter list --format=json
 ```
 
 ### Code Generation
 
 ```bash
 # Generate components
-dart run flutter_modular make:widget Login --module=Auth
-dart run flutter_modular make:service AuthService --module=Auth
-dart run flutter_modular make:route Login --module=Auth
-dart run flutter_modular make:provider AuthProvider --module=Auth
-dart run flutter_modular make:config api --module=Auth
+dart run modular_flutter make:widget Login --module=Auth
+dart run modular_flutter make:service AuthService --module=Auth
+dart run modular_flutter make:route Login --module=Auth
+dart run modular_flutter make:provider AuthProvider --module=Auth
+dart run modular_flutter make:config api --module=Auth
 ```
 
 ### Advanced
 
 ```bash
 # Execute commands across modules
-dart run flutter_modular exec -- "flutter test"
-dart run flutter_modular exec --scope=auth* --concurrency=5 -- "flutter test"
+dart run modular_flutter exec -- "flutter test"
+dart run modular_flutter exec --scope=auth* --concurrency=5 -- "flutter test"
 
 # Publish module assets/config
-dart run flutter_modular publish Auth --tag=config
+dart run modular_flutter publish Auth --tag=config
 
 # Install from pub.dev/git/path
-dart run flutter_modular install auth_module
-dart run flutter_modular install auth_module --git=https://github.com/user/repo.git
+dart run modular_flutter install auth_module
+dart run modular_flutter install auth_module --git=https://github.com/user/repo.git
 ```
 
 ## Configuration
@@ -122,7 +122,7 @@ features:
 Publish config to customize:
 
 ```bash
-dart run flutter_modular publish Auth --tag=config
+dart run modular_flutter publish Auth --tag=config
 # Edit config/modules/auth/config.yaml
 ```
 
@@ -191,7 +191,7 @@ class AuthServiceProvider extends ModuleProvider {
 ### Create Publishable Module
 
 ```bash
-dart run flutter_modular create Auth
+dart run modular_flutter create Auth
 # Module includes pubspec.yaml automatically
 ```
 
@@ -208,7 +208,7 @@ Modules from pub.dev are automatically discovered:
 
 ```bash
 # Install module
-dart run flutter_modular install auth_module
+dart run modular_flutter install auth_module
 
 # Or add to pubspec.yaml
 dependencies:
@@ -223,7 +223,7 @@ final modules = repository.all(); // auth_module included!
 
 ```bash
 # Publish config for customization
-dart run flutter_modular publish auth_module --tag=config
+dart run modular_flutter publish auth_module --tag=config
 
 # Edit config/modules/auth_module/config.yaml
 # Your app uses the customized config!

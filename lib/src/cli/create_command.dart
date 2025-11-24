@@ -6,7 +6,7 @@ class CreateCommand implements Command {
   Future<int> run(List<String> arguments) async {
     if (arguments.isEmpty) {
       print('Error: Module name is required');
-      print('Usage: flutter_modular create <name> [--force]');
+      print('Usage: modular_flutter create <name> [--force]');
       return 64;
     }
 

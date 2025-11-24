@@ -1,4 +1,4 @@
-# Flutter Modular
+# Modular Flutter
 
 A powerful Flutter package for managing modular architecture. Organize your Flutter application into reusable, manageable modules with advanced filtering and execution capabilities.
 
@@ -27,7 +27,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_modular: ^0.1.0
+  modular_flutter: ^0.1.0
 ```
 
 Then run:
@@ -41,7 +41,7 @@ flutter pub get
 ### 1. Initialize Module Registry
 
 ```dart
-import 'package:flutter_modular/flutter_modular.dart';
+import 'package:modular_flutter/modular_flutter.dart';
 
 void main() {
   final registry = ModuleRegistry();
@@ -63,33 +63,33 @@ void main() {
 ### 2. Create a Module
 
 ```bash
-dart run flutter_modular create Auth
+dart run modular_flutter create Auth
 ```
 
 ### 3. Generate Components
 
 ```bash
 # Generate a widget
-dart run flutter_modular make:widget Login --module=Auth
+dart run modular_flutter make:widget Login --module=Auth
 
 # Generate a service
-dart run flutter_modular make:service AuthService --module=Auth
+dart run modular_flutter make:service AuthService --module=Auth
 
 # Generate a route
-dart run flutter_modular make:route Login --module=Auth
+dart run modular_flutter make:route Login --module=Auth
 ```
 
 ### 4. Manage Modules
 
 ```bash
 # Enable a module
-dart run flutter_modular enable Auth
+dart run modular_flutter enable Auth
 
 # Disable a module
-dart run flutter_modular disable Payment
+dart run modular_flutter disable Payment
 
 # List all modules
-dart run flutter_modular list
+dart run modular_flutter list
 ```
 
 ## Advanced Features
@@ -98,29 +98,29 @@ dart run flutter_modular list
 
 ```bash
 # List only enabled modules
-dart run flutter_modular list --enabled
+dart run modular_flutter list --enabled
 
 # Filter by name pattern
-dart run flutter_modular list --scope=auth*
+dart run modular_flutter list --scope=auth*
 
 # JSON output for scripting
-dart run flutter_modular list --format=json
+dart run modular_flutter list --format=json
 ```
 
 ### Execute Commands Across Modules
 
 ```bash
 # Run tests in all modules
-dart run flutter_modular exec -- "flutter test"
+dart run modular_flutter exec -- "flutter test"
 
 # With filtering
-dart run flutter_modular exec --scope=auth* -- "flutter test"
+dart run modular_flutter exec --scope=auth* -- "flutter test"
 
 # With concurrency
-dart run flutter_modular exec --concurrency=5 -- "flutter test"
+dart run modular_flutter exec --concurrency=5 -- "flutter test"
 
 # Fail fast on errors
-dart run flutter_modular exec --fail-fast -- "flutter test"
+dart run modular_flutter exec --fail-fast -- "flutter test"
 ```
 
 ### Module Status Configuration
@@ -192,10 +192,10 @@ Modules can be published to pub.dev and easily customized:
 
 ```bash
 # Publish module config for customization
-dart run flutter_modular publish Auth --tag=config
+dart run modular_flutter publish Auth --tag=config
 
 # Install module from pub.dev
-dart run flutter_modular install auth_module
+dart run modular_flutter install auth_module
 ```
 
 See [PUBLISHING_MODULES.md](PUBLISHING_MODULES.md) for detailed guide.

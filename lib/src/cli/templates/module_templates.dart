@@ -64,7 +64,7 @@ enabled: true
     required String alias,
     required String studlyName,
   }) {
-    return '''import 'package:flutter_modular/flutter_modular.dart';
+    return '''import 'package:modular_flutter/modular_flutter.dart';
 
 /// Service provider for $studlyName module
 class ${studlyName}ServiceProvider extends ModuleProvider {
@@ -186,7 +186,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_modular: ^0.1.0
+  modular_flutter: ^0.1.0
 
 dev_dependencies:
   flutter_test:
@@ -205,7 +205,7 @@ flutter:
   }) {
     return '''# $studlyName Module
 
-A Flutter module built with flutter_modular.
+A Flutter module built with modular_flutter.
 
 ## Installation
 
@@ -236,8 +236,8 @@ To publish this module to pub.dev:
 ## Customization
 
 You can customize this module by:
-- Publishing config: \`flutter_modular publish $name --tag=config\`
-- Publishing assets: \`flutter_modular publish $name --tag=assets\`
+- Publishing config: \`modular_flutter publish $name --tag=config\`
+- Publishing assets: \`modular_flutter publish $name --tag=assets\`
 - Override in your app's \`config/modules/$alias/\` directory
 ''';
   }

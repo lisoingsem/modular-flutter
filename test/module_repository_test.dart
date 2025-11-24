@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_modular/flutter_modular.dart';
+import 'package:modular_flutter/modular_flutter.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
