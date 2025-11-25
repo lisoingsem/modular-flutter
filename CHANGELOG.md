@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1] - 2025-01-XX
+
+### Fixed
+- Package publishing issue resolved
+
 ## [0.3.0] - 2025-01-XX
 
 ### Added
