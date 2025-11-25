@@ -398,7 +398,7 @@ class _ModularAppState extends State<ModularApp> {
             useMaterial3: true,
           ),
       // Only set routes if we have valid routes, otherwise use home
-      routes: routes.isNotEmpty ? routes : null,
+      routes: routes.isNotEmpty ? routes : {},
       initialRoute: routes.isNotEmpty &&
               widget.initialRoute != null &&
               routes.containsKey(widget.initialRoute)
