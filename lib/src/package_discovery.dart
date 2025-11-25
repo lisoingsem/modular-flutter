@@ -10,63 +10,18 @@ import 'activator.dart';
 /// Auto-discovery for package dependencies
 class PackageDiscovery {
   /// Discover modules from all installed packages
-  ///
-  /// [localModulesPath] - Custom path for local modules (default: checks 'packages' then 'modules')
+  /// Uses package_config.json ONLY (like Melos) - no directory scanning
   static Future<List<Module>> discoverFromPackages({
     String? projectRoot,
     Activator? activator,
     String? localModulesPath,
   }) async {
-    final root = projectRoot ?? _getProjectRoot();
-    print(
-        'PackageDiscovery: projectRoot=$root, localModulesPath=$localModulesPath');
-    final discoveredModules = <Module>[];
-
-    // On web, only discover from package_config.json (no file system access)
-    if (kIsWeb) {
-      final packageModules = await _discoverFromPackages(root, activator);
-      discoveredModules.addAll(packageModules);
-      return discoveredModules;
-    }
-
-    // 1. Discover from custom local modules path (if specified)
-    if (localModulesPath != null) {
-      final customPath = path.isAbsolute(localModulesPath)
-          ? localModulesPath
-          : path.join(root, localModulesPath);
-      print('PackageDiscovery: Checking custom path: $customPath');
-      final customModules = _discoverFromDirectory(
-        customPath,
-        activator,
-      );
-      print(
-          'PackageDiscovery: Found ${customModules.length} modules in custom path');
-      discoveredModules.addAll(customModules);
-    } else {
-      // 2. Discover from local packages directory (preferred for monorepo)
-      final packagesPath = path.join(root, 'packages');
-      print('PackageDiscovery: Checking packages directory: $packagesPath');
-      final packagesModules = _discoverFromDirectory(
-        packagesPath,
-        activator,
-      );
-      print(
-          'PackageDiscovery: Found ${packagesModules.length} modules in packages/');
-      discoveredModules.addAll(packagesModules);
-
-      // 3. Discover from local modules directory (fallback)
-      final modulesModules = _discoverFromDirectory(
-        path.join(root, 'modules'),
-        activator,
-      );
-      discoveredModules.addAll(modulesModules);
-    }
-
-    // 4. Discover from installed package dependencies
-    final packageModules = await _discoverFromPackages(root, activator);
-    discoveredModules.addAll(packageModules);
-
-    return discoveredModules;
+    print('PackageDiscovery: Using package_config.json for discovery (Melos-style)');
+    
+    // ONLY use package_config.json - no directory scanning
+    // This works on all platforms and doesn't need project root
+    final packageModules = await _discoverFromPackages(null, activator);
+    return packageModules;
   }
 
   /// Get project root - works on both web and native platforms
@@ -145,22 +100,51 @@ class PackageDiscovery {
     return modules;
   }
 
-  /// Discover modules from installed packages
+  /// Discover modules from installed packages using package_config.json
+  /// This is the ONLY discovery method (like Melos)
   static Future<List<Module>> _discoverFromPackages(
-      String projectRoot, Activator? activator) async {
+      String? projectRoot, Activator? activator) async {
     final modules = <Module>[];
 
-    // On web, try to use a relative path or skip if projectRoot is empty
-    String packageConfigPath;
-    if (kIsWeb && (projectRoot.isEmpty || projectRoot == '')) {
-      // On web, try relative path from where the app is running
-      packageConfigPath = '.dart_tool/package_config.json';
+    // Find package_config.json - try multiple locations
+    String? packageConfigPath;
+    
+    // Try 1: Relative to current directory (works in most cases)
+    var configFile = File('.dart_tool/package_config.json');
+    if (configFile.existsSync()) {
+      packageConfigPath = configFile.path;
+      print('PackageDiscovery: Found package_config.json at: $packageConfigPath');
     } else {
-      packageConfigPath = path.join(
-        projectRoot,
-        '.dart_tool',
-        'package_config.json',
-      );
+      // Try 2: Use projectRoot if provided
+      if (projectRoot != null && projectRoot.isNotEmpty && projectRoot != '/') {
+        configFile = File(path.join(projectRoot, '.dart_tool', 'package_config.json'));
+        if (configFile.existsSync()) {
+          packageConfigPath = configFile.path;
+          print('PackageDiscovery: Found package_config.json at: $packageConfigPath');
+        }
+      }
+      
+      // Try 3: Look in parent directories (up to 5 levels)
+      if (packageConfigPath == null) {
+        var currentDir = Directory.current;
+        for (int i = 0; i < 5; i++) {
+          configFile = File(path.join(currentDir.path, '.dart_tool', 'package_config.json'));
+          if (configFile.existsSync()) {
+            packageConfigPath = configFile.path;
+            print('PackageDiscovery: Found package_config.json at: $packageConfigPath');
+            break;
+          }
+          currentDir = currentDir.parent;
+          if (!currentDir.existsSync() || currentDir.path == currentDir.parent.path) {
+            break;
+          }
+        }
+      }
+    }
+
+    if (packageConfigPath == null) {
+      print('PackageDiscovery: package_config.json not found - no modules will be discovered');
+      return modules;
     }
 
     final packageConfigFile = File(packageConfigPath);
@@ -201,7 +185,7 @@ class PackageDiscovery {
   }
 
   /// Resolve package URI to absolute path
-  static String? _resolvePackagePath(String uri, String projectRoot) {
+  static String? _resolvePackagePath(String uri, String? projectRoot) {
     if (uri.startsWith('file://')) {
       // Remove file:// prefix and decode
       var pathStr = uri.substring(7);
@@ -211,8 +195,13 @@ class PackageDiscovery {
       }
       return path.normalize(pathStr);
     } else if (uri.startsWith('../') || uri.startsWith('./')) {
-      // Relative path
-      return path.normalize(path.join(projectRoot, uri));
+      // Relative path - use package_config.json's directory as base
+      // Since we found package_config.json, use its parent as base
+      if (projectRoot != null && projectRoot.isNotEmpty) {
+        return path.normalize(path.join(projectRoot, uri));
+      }
+      // Try to resolve relative to current directory
+      return path.normalize(path.join(Directory.current.path, uri));
     }
     return null;
   }
