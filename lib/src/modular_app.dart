@@ -193,47 +193,58 @@ class _ModularAppState extends State<ModularApp> {
     ModuleRegistry registry,
     ModularAppConfig config,
   ) {
-    final resolver = RouteResolver();
-    var routes = resolver.buildRoutesFromRegistry(registry.routeRegistry);
+    try {
+      final resolver = RouteResolver();
+      var routes = resolver.buildRoutesFromRegistry(registry.routeRegistry);
 
-    // Ensure all route builders are valid (filter out any potential nulls)
-    routes = Map<String, WidgetBuilder>.from(routes);
+      // Ensure all route builders are valid (filter out any potential nulls)
+      final validRoutes = <String, WidgetBuilder>{};
+      for (final entry in routes.entries) {
+        if (entry.value != null) {
+          validRoutes[entry.key] = entry.value;
+        }
+      }
+      routes = validRoutes;
 
-    // Merge additional routes (last order wins - additionalRoutes override module routes)
-    if (widget.additionalRoutes != null) {
-      final additionalRoutes =
-          Map<String, WidgetBuilder>.from(widget.additionalRoutes!);
-      routes = {
-        ...routes, // Module routes first
-        ...additionalRoutes, // Additional routes override module routes (last wins)
-      };
-    }
-
-    // Call route built hook (LAST ORDER - highest priority, can override everything)
-    // The hook receives all routes and returns the final routes map
-    // Routes returned from hook override all previous routes (last registered wins)
-    if (config.onRouteBuilt != null) {
-      try {
-        final hookResult = config.onRouteBuilt!(routes);
-        // Ensure hook result is valid and filter out nulls
-        final validHookRoutes = <String, WidgetBuilder>{};
-        for (final entry in hookResult.entries) {
+      // Merge additional routes (last order wins - additionalRoutes override module routes)
+      if (widget.additionalRoutes != null) {
+        final additionalRoutes = <String, WidgetBuilder>{};
+        for (final entry in widget.additionalRoutes!.entries) {
           if (entry.value != null) {
-            validHookRoutes[entry.key] = entry.value;
+            additionalRoutes[entry.key] = entry.value;
           }
         }
-        // Hook result overrides everything (last order wins)
         routes = {
-          ...routes,
-          ...validHookRoutes, // Hook routes override all previous routes
+          ...routes, // Module routes first
+          ...additionalRoutes, // Additional routes override module routes (last wins)
         };
-      } catch (e) {
-        print('Warning: Error in onRouteBuilt hook: $e');
-        // Continue with existing routes if hook fails
       }
-    }
 
-    return routes;
+      // Call route built hook (LAST ORDER - highest priority, can override everything)
+      // The hook receives all routes and returns the final routes map
+      // Routes returned from hook override all previous routes (last registered wins)
+      if (config.onRouteBuilt != null) {
+        try {
+          final hookResult = config.onRouteBuilt!(routes);
+          // Ensure hook result is valid and filter out nulls
+          final validHookRoutes = <String, WidgetBuilder>{};
+          for (final entry in hookResult.entries) {
+            if (entry.value != null) {
+              validHookRoutes[entry.key] = entry.value;
+            }
+          }
+          // Hook result overrides everything (last order wins)
+          routes = {
+            ...routes,
+            ...validHookRoutes, // Hook routes override all previous routes
+          };
+        } catch (e) {
+          print('Warning: Error in onRouteBuilt hook: $e');
+          // Continue with existing routes if hook fails
+        }
+      }
+
+      return routes;
     } catch (e) {
       print('Warning: Error building routes: $e');
       return <String, WidgetBuilder>{}; // Return empty routes on error
