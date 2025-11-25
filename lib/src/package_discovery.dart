@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:path/path.dart' as path;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:yaml/yaml.dart';
 import 'module.dart';
 import 'activator.dart';
