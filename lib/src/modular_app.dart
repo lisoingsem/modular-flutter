@@ -75,24 +75,23 @@ class _ModularAppState extends State<ModularApp> {
     _debugLog(
         'ModularApp initializing (autoBuildRoutes=${config.autoBuildRoutes}, autoDiscover=${config.autoDiscoverModules})');
 
-    // Run heavy I/O operations in a separate isolate/microtask to avoid blocking UI
+    // Run heavy I/O operations in a separate microtask to avoid blocking UI
     try {
-      await Future.microtask(() async {
-        // Auto-discovery: Auto-import modules at runtime
-        // This loads modules automatically without needing imports in main.dart
-        await _autoImportModules(modulesPath);
+      // Auto-discovery: Auto-import modules at runtime
+      // This loads modules automatically without needing imports in main.dart
+      await _autoImportModules(modulesPath);
 
-        // Create registry
-        final repository = ModuleRepository(localModulesPath: modulesPath);
-        _registry = ModuleRegistry(repository: repository);
+      // Create registry
+      final repository = ModuleRepository(localModulesPath: modulesPath);
+      _registry = ModuleRegistry(repository: repository);
 
-        // Set static registry for access
-        ModularApp._registry = _registry;
+      // Set static registry for access
+      ModularApp._registry = _registry;
 
-        // Scan modules first (async operation)
-        print('ModularApp: Scanning for modules in: $modulesPath');
-        final scannedModules = await repository.scan();
-        print('ModularApp: Scanned ${scannedModules.length} modules');
+      // Scan modules first (async operation)
+      print('ModularApp: Scanning for modules in: $modulesPath');
+      final scannedModules = await repository.scan();
+      print('ModularApp: Scanned ${scannedModules.length} modules');
 
         // Initialize auto-registered providers (no code generation needed)
         // Modules register themselves via ModuleAutoRegister when their package is loaded
@@ -140,7 +139,6 @@ class _ModularAppState extends State<ModularApp> {
           _routes = {};
           _logRoutesOnce();
         }
-      });
     } catch (e, stackTrace) {
       print('ERROR in ModularApp initialization: $e');
       print('Stack trace: $stackTrace');
