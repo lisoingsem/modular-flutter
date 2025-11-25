@@ -411,9 +411,35 @@ class _ModularAppState extends State<ModularApp> {
       return '';
     }
     try {
-      return Directory.current.path;
+      // On mobile, Directory.current might not be the project root
+      // Try to find the project root by looking for pubspec.yaml
+      var current = Directory.current.path;
+      
+      // Check if we're already in the project root (has pubspec.yaml)
+      if (File(path.join(current, 'pubspec.yaml')).existsSync()) {
+        print('ModularApp._getProjectRoot: Found project root at $current');
+        return current;
+      }
+      
+      // Try parent directories (up to 5 levels)
+      var dir = Directory(current);
+      for (int i = 0; i < 5; i++) {
+        final pubspecPath = path.join(dir.path, 'pubspec.yaml');
+        if (File(pubspecPath).existsSync()) {
+          print('ModularApp._getProjectRoot: Found project root at ${dir.path}');
+          return dir.path;
+        }
+        dir = dir.parent;
+        if (!dir.existsSync() || dir.path == dir.parent.path) {
+          break;
+        }
+      }
+      
+      // Fallback to Directory.current
+      print('ModularApp._getProjectRoot: Using fallback: $current');
+      return current;
     } catch (e) {
-      // Fallback if Directory.current fails
+      print('ModularApp._getProjectRoot: Error getting project root: $e');
       return '';
     }
   }
