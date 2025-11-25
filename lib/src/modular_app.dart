@@ -76,68 +76,81 @@ class _ModularAppState extends State<ModularApp> {
         'ModularApp initializing (autoBuildRoutes=${config.autoBuildRoutes}, autoDiscover=${config.autoDiscoverModules})');
 
     // Run heavy I/O operations in a separate isolate/microtask to avoid blocking UI
-    await Future.microtask(() async {
-      // Auto-discovery: Auto-import modules at runtime
-      // This loads modules automatically without needing imports in main.dart
-      await _autoImportModules(modulesPath);
+    try {
+      await Future.microtask(() async {
+        // Auto-discovery: Auto-import modules at runtime
+        // This loads modules automatically without needing imports in main.dart
+        await _autoImportModules(modulesPath);
 
-      // Create registry
-      final repository = ModuleRepository(localModulesPath: modulesPath);
-      _registry = ModuleRegistry(repository: repository);
+        // Create registry
+        final repository = ModuleRepository(localModulesPath: modulesPath);
+        _registry = ModuleRegistry(repository: repository);
 
-      // Set static registry for access
-      ModularApp._registry = _registry;
+        // Set static registry for access
+        ModularApp._registry = _registry;
 
-      // Scan modules first (async operation)
-      _debugLog('ModularApp: Scanning for modules in: $modulesPath');
-      final scannedModules = await repository.scan();
-      _debugLog('ModularApp: Scanned ${scannedModules.length} modules');
+        // Scan modules first (async operation)
+        print('ModularApp: Scanning for modules in: $modulesPath');
+        final scannedModules = await repository.scan();
+        print('ModularApp: Scanned ${scannedModules.length} modules');
 
-      // Initialize auto-registered providers (no code generation needed)
-      // Modules register themselves via ModuleAutoRegister when their package is loaded
-      // Pure runtime discovery - modules auto-register themselves
-      ModuleAutoRegister.initialize(_registry!);
+        // Initialize auto-registered providers (no code generation needed)
+        // Modules register themselves via ModuleAutoRegister when their package is loaded
+        // Pure runtime discovery - modules auto-register themselves
+        ModuleAutoRegister.initialize(_registry!);
 
-      // Auto-register providers if enabled (legacy support)
-      if (config.autoRegisterProviders) {
-        await _autoRegisterProviders(_registry!, config);
-      }
+        // Auto-register providers if enabled (legacy support)
+        if (config.autoRegisterProviders) {
+          await _autoRegisterProviders(_registry!, config);
+        }
 
-      // Call before register hook
-      config.onBeforeRegister?.call(_registry!);
+        // Call before register hook
+        config.onBeforeRegister?.call(_registry!);
 
-      // Register modules
-      if (config.autoDiscoverModules) {
-        _registerModules(_registry!, config);
-      }
+        // Register modules
+        if (config.autoDiscoverModules) {
+          print('ModularApp: Starting module registration...');
+          _registerModules(_registry!, config);
+        }
 
-      // Register menus from all enabled modules
-      _registry!.menuRegistry.register();
-      _logModulesAndMenus(_registry!);
+        // Register menus from all enabled modules
+        print('ModularApp: Registering menus...');
+        _registry!.menuRegistry.register();
+        _logModulesAndMenus(_registry!);
 
-      // Call after register hook
-      config.onAfterRegister?.call(_registry!);
+        // Call after register hook
+        config.onAfterRegister?.call(_registry!);
 
-      // Boot modules
-      config.onBeforeBoot?.call(_registry!);
-      _registry!.boot();
-      config.onAfterBoot?.call(_registry!);
+        // Boot modules
+        config.onBeforeBoot?.call(_registry!);
+        _registry!.boot();
+        config.onAfterBoot?.call(_registry!);
 
-      // Build routes
-      if (config.autoBuildRoutes) {
-        try {
-          _routes = _buildRoutes(_registry!, config);
-          _logRoutesOnce();
-        } catch (e) {
-          print('Warning: Error building routes: $e');
-          _routes = {}; // Fallback to empty routes
+        // Build routes
+        if (config.autoBuildRoutes) {
+          try {
+            _routes = _buildRoutes(_registry!, config);
+            _logRoutesOnce();
+          } catch (e) {
+            print('Warning: Error building routes: $e');
+            _routes = {}; // Fallback to empty routes
+            _logRoutesOnce();
+          }
+        } else {
+          _routes = {};
           _logRoutesOnce();
         }
-      } else {
-        _routes = {};
-        _logRoutesOnce();
+      });
+    } catch (e, stackTrace) {
+      print('ERROR in ModularApp initialization: $e');
+      print('Stack trace: $stackTrace');
+      if (mounted) {
+        setState(() {
+          _initialized = true;
+        });
       }
-    });
+      return;
+    }
 
     if (mounted) {
       setState(() {
@@ -190,24 +203,25 @@ class _ModularAppState extends State<ModularApp> {
   /// Register modules
   void _registerModules(ModuleRegistry registry, ModularAppConfig config) {
     final modules = registry.repository.all();
-    _debugLog('ModularApp: Found ${modules.length} modules in repository');
+    print('ModularApp: Found ${modules.length} modules in repository');
 
     // Filter modules if shouldLoadModule hook is provided
     final modulesToLoad = config.shouldLoadModule != null
         ? modules.where((m) => config.shouldLoadModule!(m)).toList()
         : modules;
-    _debugLog('ModularApp: ${modulesToLoad.length} modules to load (after filtering)');
+    print(
+        'ModularApp: ${modulesToLoad.length} modules to load (after filtering)');
 
     // Register each module
     int registeredCount = 0;
     for (final module in modulesToLoad) {
       if (!module.enabled) {
-        _debugLog('ModularApp: Skipping disabled module: ${module.alias}');
+        print('ModularApp: Skipping disabled module: ${module.alias}');
         continue;
       }
 
       try {
-        _debugLog('ModularApp: Registering module: ${module.alias}');
+        print('ModularApp: Registering module: ${module.alias}');
         registry.registerModule(module);
         registeredCount++;
         config.onModuleLoaded?.call(module);
@@ -215,7 +229,7 @@ class _ModularAppState extends State<ModularApp> {
         _debugLog('Warning: Failed to register module "${module.name}": $e');
       }
     }
-    _debugLog('ModularApp: Registered $registeredCount modules');
+    print('ModularApp: Registered $registeredCount modules');
   }
 
   /// Build routes from registry
@@ -627,22 +641,22 @@ class _ModularAppState extends State<ModularApp> {
 
     final modules = registry.repository.getOrdered();
     if (modules.isEmpty) {
-      _debugLog('ModularApp modules: <none discovered>');
+      print('ModularApp modules: <none discovered>');
     } else {
       final moduleSummary = modules
           .map((module) => '${module.alias} (enabled=${module.enabled})')
           .toList();
-      _debugLog('ModularApp modules (${moduleSummary.length}): $moduleSummary');
+      print('ModularApp modules (${moduleSummary.length}): $moduleSummary');
     }
 
     final menus = registry.menuRegistry.getAllMenus();
     if (menus.isEmpty) {
-      _debugLog('ModularApp menus: <none registered>');
+      print('ModularApp menus: <none registered>');
     } else {
       final menuSummary = menus.entries
           .map((entry) => '${entry.key}: ${entry.value.length} items')
           .join(', ');
-      _debugLog('ModularApp menus ($menuSummary)');
+      print('ModularApp menus ($menuSummary)');
     }
   }
 }
