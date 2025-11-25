@@ -397,7 +397,7 @@ class _ModularAppState extends State<ModularApp> {
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             useMaterial3: true,
           ),
-      routes: routes.isEmpty ? null : routes,
+      routes: routes,
       initialRoute: widget.initialRoute,
       home: routes.isEmpty
           ? (widget.home ??
