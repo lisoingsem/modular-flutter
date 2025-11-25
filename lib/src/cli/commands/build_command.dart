@@ -272,7 +272,7 @@ class BuildCommand implements Command {
       final repository = ModuleRepository(
         localModulesPath: modulesPath,
       );
-      final modules = repository.scan();
+      final modules = await repository.scan();
 
       if (modules.isEmpty) {
         return;
@@ -356,7 +356,7 @@ class BuildCommand implements Command {
         final repository = ModuleRepository(
           localModulesPath: modulesPath,
         );
-        final modules = repository.scan();
+        final modules = await repository.scan();
         for (final module in modules) {
           if (module.enabled) {
             enabledModules.add(module.alias);

@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.7] - 2025-01-19
+
+### Fixed
+- **Async Module Discovery**: Fixed blocking main thread during initialization - module scanning is now fully async
+- **Route Building Errors**: Added error handling for route building to prevent crashes during route generation
+- **Module Scanning**: Ensured modules are scanned before registration to prevent null reference errors
+- **Test Compatibility**: Updated all tests to work with async module scanning
+
+### Improved
+- Better initialization flow - modules are properly scanned before registration
+- Non-blocking UI during app startup - heavy I/O operations moved to async microtasks
+- More robust error handling in route building hooks
+
 ## [0.4.6] - 2025-01-19
 
 ### Removed

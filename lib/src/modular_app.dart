@@ -69,52 +69,59 @@ class _ModularAppState extends State<ModularApp> {
     final config = widget.config ?? ModularAppConfig.defaults();
     final modulesPath = config.modulesPath ?? _autoDiscoverModulesPath();
 
-    // Auto-discovery: Auto-import modules at runtime
-    // This loads modules automatically without needing imports in main.dart
-    await _autoImportModules(modulesPath);
+    // Run heavy I/O operations in a separate isolate/microtask to avoid blocking UI
+    await Future.microtask(() async {
+      // Auto-discovery: Auto-import modules at runtime
+      // This loads modules automatically without needing imports in main.dart
+      await _autoImportModules(modulesPath);
 
-    // Create registry
-    _registry = ModuleRegistry(
-      repository: ModuleRepository(localModulesPath: modulesPath),
-    );
+      // Create registry
+      final repository = ModuleRepository(localModulesPath: modulesPath);
+      _registry = ModuleRegistry(repository: repository);
 
-    // Set static registry for access
-    ModularApp._registry = _registry;
+      // Set static registry for access
+      ModularApp._registry = _registry;
 
-    // Initialize auto-registered providers (no code generation needed)
-    // Modules register themselves via ModuleAutoRegister when their package is loaded
-    // Pure runtime discovery - modules auto-register themselves
-    ModuleAutoRegister.initialize(_registry!);
+      // Scan modules first (async operation)
+      await repository.scan();
 
-    // Auto-register providers if enabled (legacy support)
-    if (config.autoRegisterProviders) {
-      await _autoRegisterProviders(_registry!, config);
-    }
+      // Initialize auto-registered providers (no code generation needed)
+      // Modules register themselves via ModuleAutoRegister when their package is loaded
+      // Pure runtime discovery - modules auto-register themselves
+      ModuleAutoRegister.initialize(_registry!);
 
-    // Call before register hook
-    config.onBeforeRegister?.call(_registry!);
+      // Auto-register providers if enabled (legacy support)
+      if (config.autoRegisterProviders) {
+        await _autoRegisterProviders(_registry!, config);
+      }
 
-    // Register modules
-    if (config.autoDiscoverModules) {
-      _registerModules(_registry!, config);
-    }
+      // Call before register hook
+      config.onBeforeRegister?.call(_registry!);
 
-    // Call after register hook
-    config.onAfterRegister?.call(_registry!);
+      // Register modules
+      if (config.autoDiscoverModules) {
+        _registerModules(_registry!, config);
+      }
 
-    // Boot modules
-    config.onBeforeBoot?.call(_registry!);
-    _registry!.boot();
-    config.onAfterBoot?.call(_registry!);
+      // Call after register hook
+      config.onAfterRegister?.call(_registry!);
 
-    // Build routes
-    if (config.autoBuildRoutes) {
-      _routes = _buildRoutes(_registry!, config);
-    }
+      // Boot modules
+      config.onBeforeBoot?.call(_registry!);
+      _registry!.boot();
+      config.onAfterBoot?.call(_registry!);
 
-    setState(() {
-      _initialized = true;
+      // Build routes
+      if (config.autoBuildRoutes) {
+        _routes = _buildRoutes(_registry!, config);
+      }
     });
+
+    if (mounted) {
+      setState(() {
+        _initialized = true;
+      });
+    }
   }
 
   /// Auto-register providers from discovered modules
@@ -182,12 +189,16 @@ class _ModularAppState extends State<ModularApp> {
     final resolver = RouteResolver();
     var routes = resolver.buildRoutesFromRegistry(registry.routeRegistry);
 
+    // Ensure all route builders are valid (filter out any potential nulls)
+    routes = Map<String, WidgetBuilder>.from(routes);
+
     // Merge additional routes (last order wins - additionalRoutes override module routes)
     if (widget.additionalRoutes != null) {
+      final additionalRoutes =
+          Map<String, WidgetBuilder>.from(widget.additionalRoutes!);
       routes = {
         ...routes, // Module routes first
-        ...widget
-            .additionalRoutes!, // Additional routes override module routes (last wins)
+        ...additionalRoutes, // Additional routes override module routes (last wins)
       };
     }
 
@@ -195,12 +206,19 @@ class _ModularAppState extends State<ModularApp> {
     // The hook receives all routes and returns the final routes map
     // Routes returned from hook override all previous routes (last registered wins)
     if (config.onRouteBuilt != null) {
-      final hookResult = config.onRouteBuilt!(routes);
-      // Hook result overrides everything (last order wins)
-      routes = {
-        ...routes,
-        ...hookResult, // Hook routes override all previous routes
-      };
+      try {
+        final hookResult = config.onRouteBuilt!(routes);
+        // Ensure hook result is valid
+        final validHookRoutes = Map<String, WidgetBuilder>.from(hookResult);
+        // Hook result overrides everything (last order wins)
+        routes = {
+          ...routes,
+          ...validHookRoutes, // Hook routes override all previous routes
+        };
+      } catch (e) {
+        print('Warning: Error in onRouteBuilt hook: $e');
+        // Continue with existing routes if hook fails
+      }
     }
 
     return routes;
@@ -244,7 +262,7 @@ class _ModularAppState extends State<ModularApp> {
 
       // Discover all modules in packages directory
       final repository = ModuleRepository(localModulesPath: modulesPath);
-      final modules = repository.scan();
+      final modules = await repository.scan();
 
       // For each discovered module, try to load its entry point
       // This triggers the module's auto-registration code
@@ -325,10 +343,13 @@ class _ModularAppState extends State<ModularApp> {
 
     final routes = _routes ?? {};
 
+    // Ensure all route builders are valid
+    final validRoutes = Map<String, WidgetBuilder>.from(routes);
+
     // MaterialApp doesn't allow both 'home' and 'routes' when routes contains '/'
     // If routes contains '/', we must use routes and cannot use home
-    final hasHomeRoute = routes.containsKey('/');
-    final hasRoutes = routes.isNotEmpty;
+    final hasHomeRoute = validRoutes.containsKey('/');
+    final hasRoutes = validRoutes.isNotEmpty;
 
     // Build MaterialApp - last registered route wins
     // If routes contains '/', we cannot use home - use routes only
@@ -340,7 +361,7 @@ class _ModularAppState extends State<ModularApp> {
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
               useMaterial3: true,
             ),
-        routes: routes,
+        routes: validRoutes,
         initialRoute: widget.initialRoute,
         navigatorObservers: widget.navigatorObservers ?? [],
         onUnknownRoute: (settings) {
@@ -366,7 +387,7 @@ class _ModularAppState extends State<ModularApp> {
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
               useMaterial3: true,
             ),
-        routes: routes,
+        routes: validRoutes,
         initialRoute: widget.initialRoute,
         home: widget.home,
         navigatorObservers: widget.navigatorObservers ?? [],

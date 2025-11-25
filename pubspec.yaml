@@ -1,6 +1,6 @@
 name: modular_flutter
 description: A Flutter package for managing modular architecture with auto-discovery and runtime route registration
-version: 0.4.6
+version: 0.4.7
 homepage: https://github.com/lisoingsem/modular-flutter.git
 
 environment:

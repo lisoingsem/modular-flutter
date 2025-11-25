@@ -53,12 +53,12 @@ void main() {
   });
 
   group('ModuleRepository', () {
-    test('can scan and discover modules', () {
+    test('can scan and discover modules', () async {
       final repository = ModuleRepository(
         modulesPath: '/tmp/test_modules',
       );
 
-      final modules = repository.scan();
+      final modules = await repository.scan();
       expect(modules, isA<List<Module>>());
     });
 

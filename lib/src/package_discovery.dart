@@ -11,11 +11,11 @@ class PackageDiscovery {
   /// Discover modules from all installed packages
   ///
   /// [localModulesPath] - Custom path for local modules (default: checks 'packages' then 'modules')
-  static List<Module> discoverFromPackages({
+  static Future<List<Module>> discoverFromPackages({
     String? projectRoot,
     Activator? activator,
     String? localModulesPath,
-  }) {
+  }) async {
     final root = projectRoot ?? Directory.current.path;
     final discoveredModules = <Module>[];
 
@@ -44,9 +44,9 @@ class PackageDiscovery {
       discoveredModules.addAll(modulesModules);
     }
 
-    // 4. Discover from installed package dependencies
-    final packageModules = _discoverFromPackages(root, activator);
-    discoveredModules.addAll(packageModules);
+      // 4. Discover from installed package dependencies
+      final packageModules = await _discoverFromPackages(root, activator);
+      discoveredModules.addAll(packageModules);
 
     return discoveredModules;
   }
@@ -80,8 +80,8 @@ class PackageDiscovery {
   }
 
   /// Discover modules from installed packages
-  static List<Module> _discoverFromPackages(
-      String projectRoot, Activator? activator) {
+  static Future<List<Module>> _discoverFromPackages(
+      String projectRoot, Activator? activator) async {
     final modules = <Module>[];
 
     // Try to read package_config.json (Dart 2.17+)
@@ -94,7 +94,8 @@ class PackageDiscovery {
 
     if (packageConfigFile.existsSync()) {
       try {
-        final content = packageConfigFile.readAsStringSync();
+        // Use async read to avoid blocking main thread
+        final content = await packageConfigFile.readAsString();
         final packageConfig = jsonDecode(content) as Map<String, dynamic>;
         final packages = packageConfig['packages'] as List? ?? [];
 

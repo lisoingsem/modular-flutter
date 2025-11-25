@@ -23,8 +23,8 @@ void main() {
       }
     });
 
-    test('returns empty list when modules directory does not exist', () {
-      final modules = repository.scan();
+    test('returns empty list when modules directory does not exist', () async {
+      final modules = await repository.scan();
       expect(modules, isEmpty);
     });
 

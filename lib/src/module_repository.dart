@@ -45,12 +45,12 @@ class ModuleRepository {
 
   /// Scan and discover all modules
   /// Auto-discovers from local modules/ directory and installed packages
-  List<Module> scan() {
+  Future<List<Module>> scan() async {
     _modules = {};
 
     // Discover modules from all sources
     final discoveredModules = autoDiscoverPackages
-        ? PackageDiscovery.discoverFromPackages(
+        ? await PackageDiscovery.discoverFromPackages(
             projectRoot: Directory.current.path,
             activator: activator,
             localModulesPath: localModulesPath)
