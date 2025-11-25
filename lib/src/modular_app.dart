@@ -89,7 +89,9 @@ class _ModularAppState extends State<ModularApp> {
       ModularApp._registry = _registry;
 
       // Scan modules first (async operation)
-      await repository.scan();
+      _debugLog('ModularApp: Scanning for modules in: $modulesPath');
+      final scannedModules = await repository.scan();
+      _debugLog('ModularApp: Scanned ${scannedModules.length} modules');
 
       // Initialize auto-registered providers (no code generation needed)
       // Modules register themselves via ModuleAutoRegister when their package is loaded
@@ -188,23 +190,32 @@ class _ModularAppState extends State<ModularApp> {
   /// Register modules
   void _registerModules(ModuleRegistry registry, ModularAppConfig config) {
     final modules = registry.repository.all();
+    _debugLog('ModularApp: Found ${modules.length} modules in repository');
 
     // Filter modules if shouldLoadModule hook is provided
     final modulesToLoad = config.shouldLoadModule != null
         ? modules.where((m) => config.shouldLoadModule!(m)).toList()
         : modules;
+    _debugLog('ModularApp: ${modulesToLoad.length} modules to load (after filtering)');
 
     // Register each module
+    int registeredCount = 0;
     for (final module in modulesToLoad) {
-      if (!module.enabled) continue;
+      if (!module.enabled) {
+        _debugLog('ModularApp: Skipping disabled module: ${module.alias}');
+        continue;
+      }
 
       try {
+        _debugLog('ModularApp: Registering module: ${module.alias}');
         registry.registerModule(module);
+        registeredCount++;
         config.onModuleLoaded?.call(module);
       } catch (e) {
-        print('Warning: Failed to register module "${module.name}": $e');
+        _debugLog('Warning: Failed to register module "${module.name}": $e');
       }
     }
+    _debugLog('ModularApp: Registered $registeredCount modules');
   }
 
   /// Build routes from registry
