@@ -354,95 +354,7 @@ class _ModularAppState extends State<ModularApp> {
 
     final routes = _routes ?? {};
 
-    // Ensure all route builders are valid
-    final validRoutes = Map<String, WidgetBuilder>.from(routes);
-
-    // MaterialApp doesn't allow both 'home' and 'routes' when routes contains '/'
-    // If routes contains '/', we must use routes and cannot use home
-    final hasHomeRoute = validRoutes.containsKey('/');
-    final hasRoutes = validRoutes.isNotEmpty;
-
-    // Build MaterialApp - last registered route wins
-    // If routes contains '/', we cannot use home - use routes only
-    if (hasHomeRoute) {
-      return MaterialApp(
-        title: widget.title ?? 'Flutter App',
-        theme: widget.theme ??
-            ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-              useMaterial3: true,
-            ),
-        routes: validRoutes,
-        initialRoute: widget.initialRoute ?? '/',
-        navigatorObservers: widget.navigatorObservers ?? [],
-        onGenerateRoute: (settings) {
-          // First check if route exists in validRoutes
-          final routeBuilder = validRoutes[settings.name];
-          if (routeBuilder != null) {
-            return MaterialPageRoute(
-              builder: routeBuilder,
-              settings: settings,
-            );
-          }
-          // Return null to let onUnknownRoute handle it
-          return null;
-        },
-        onUnknownRoute: (settings) {
-          // Fallback for unknown routes
-          return MaterialPageRoute(
-            builder: (context) => Scaffold(
-              appBar: AppBar(title: const Text('Not Found')),
-              body: Center(
-                child: Text('Route "${settings.name}" not found'),
-              ),
-            ),
-            settings: settings,
-          );
-        },
-      );
-    }
-
-    // If we have routes but no '/', we can use both
-    if (hasRoutes) {
-      return MaterialApp(
-        title: widget.title ?? 'Flutter App',
-        theme: widget.theme ??
-            ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-              useMaterial3: true,
-            ),
-        routes: validRoutes,
-        initialRoute: widget.initialRoute,
-        home: widget.home,
-        navigatorObservers: widget.navigatorObservers ?? [],
-        onGenerateRoute: (settings) {
-          // Check if route exists in validRoutes
-          final routeBuilder = validRoutes[settings.name];
-          if (routeBuilder != null) {
-            return MaterialPageRoute(
-              builder: routeBuilder,
-              settings: settings,
-            );
-          }
-          // If no route found and no home, return null to use onUnknownRoute
-          return null;
-        },
-        onUnknownRoute: (settings) {
-          // Fallback for unknown routes
-          return MaterialPageRoute(
-            builder: (context) => Scaffold(
-              appBar: AppBar(title: const Text('Not Found')),
-              body: Center(
-                child: Text('Route "${settings.name}" not found'),
-              ),
-            ),
-            settings: settings,
-          );
-        },
-      );
-    }
-
-    // No routes - use home if provided, or show error
+    // Build MaterialApp with routes - simple and automatic
     return MaterialApp(
       title: widget.title ?? 'Flutter App',
       theme: widget.theme ??
@@ -450,14 +362,9 @@ class _ModularAppState extends State<ModularApp> {
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             useMaterial3: true,
           ),
+      routes: routes,
       initialRoute: widget.initialRoute,
-      home: widget.home ??
-          const Scaffold(
-            body: Center(
-              child: Text(
-                  'No routes configured. Please add routes or set home widget.'),
-            ),
-          ),
+      home: widget.home,
       navigatorObservers: widget.navigatorObservers ?? [],
       onUnknownRoute: (settings) {
         // Fallback for unknown routes
@@ -468,6 +375,7 @@ class _ModularAppState extends State<ModularApp> {
               child: Text('Route "${settings.name}" not found'),
             ),
           ),
+          settings: settings,
         );
       },
     );
