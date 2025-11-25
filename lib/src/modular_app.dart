@@ -398,8 +398,10 @@ class _ModularAppState extends State<ModularApp> {
             useMaterial3: true,
           ),
       routes: routes,
-      initialRoute: widget.initialRoute,
-      home: routes.isEmpty
+      initialRoute: widget.initialRoute != null && routes.containsKey(widget.initialRoute)
+          ? widget.initialRoute
+          : null,
+      home: routes.isEmpty || (widget.initialRoute != null && !routes.containsKey(widget.initialRoute))
           ? (widget.home ??
               const Scaffold(body: Center(child: Text('No routes configured'))))
           : null,
