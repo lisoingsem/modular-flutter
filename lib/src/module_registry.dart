@@ -86,6 +86,9 @@ class ModuleRegistry {
       registerModule(module);
     }
 
+    // Register menus from all enabled modules
+    menuRegistry.register();
+
     _registered = true;
   }
 

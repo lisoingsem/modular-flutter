@@ -109,6 +109,10 @@ class _ModularAppState extends State<ModularApp> {
         _registerModules(_registry!, config);
       }
 
+      // Register menus from all enabled modules
+      _registry!.menuRegistry.register();
+      _logModulesAndMenus(_registry!);
+
       // Call after register hook
       config.onAfterRegister?.call(_registry!);
 
@@ -602,6 +606,32 @@ class _ModularAppState extends State<ModularApp> {
     if (kDebugMode) {
       // ignore: avoid_print
       print(message);
+    }
+  }
+
+  void _logModulesAndMenus(ModuleRegistry registry) {
+    if (!kDebugMode) {
+      return;
+    }
+
+    final modules = registry.repository.getOrdered();
+    if (modules.isEmpty) {
+      _debugLog('ModularApp modules: <none discovered>');
+    } else {
+      final moduleSummary = modules
+          .map((module) => '${module.alias} (enabled=${module.enabled})')
+          .toList();
+      _debugLog('ModularApp modules (${moduleSummary.length}): $moduleSummary');
+    }
+
+    final menus = registry.menuRegistry.getAllMenus();
+    if (menus.isEmpty) {
+      _debugLog('ModularApp menus: <none registered>');
+    } else {
+      final menuSummary = menus.entries
+          .map((entry) => '${entry.key}: ${entry.value.length} items')
+          .join(', ');
+      _debugLog('ModularApp menus ($menuSummary)');
     }
   }
 }
