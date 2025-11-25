@@ -47,14 +47,4 @@ class RouteResolver {
 
     return routes;
   }
-
-  /// Convert StudlyCase to snake_case
-  static String _toSnakeCase(String input) {
-    return input
-        .replaceAllMapped(
-          RegExp(r'([A-Z])'),
-          (match) => '_${match.group(1)!.toLowerCase()}',
-        )
-        .replaceFirst(RegExp(r'^_'), '');
-  }
 }

@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
-import 'package:flutter/material.dart';
 import 'module.dart';
 import 'localization_registry.dart';
 import 'route_registry.dart';
