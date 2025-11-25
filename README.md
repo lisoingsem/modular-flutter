@@ -6,12 +6,15 @@ A powerful Flutter package for managing modular architecture. Organize your Flut
 
 ## Features
 
+- **Zero Configuration**: Just `runApp(ModularApp())` - everything is automatic!
 - **Auto-Discovery**: Automatically discovers modules from `packages/` or `modules/` directory
 - **Auto-Sync**: Automatically updates `pubspec.yaml` with discovered modules (no manual editing!)
-- **Module Management**: Enable/disable modules dynamically with JSON configuration
+- **Menu System**: Auto-register menus from `module.yaml` (inspired by Laravel Menus)
+- **Translation Support**: Auto-load translations from module `lang/` or `l10n/` directories
 - **Service Providers**: Register services and dependencies per module
 - **Route Registration**: Register routes from modules automatically
-- **Code Generation**: Auto-generates `modules.dart` with provider registration
+- **Optional Dependency**: Modules can work without `modular_flutter` as a direct dependency
+- **Module Management**: Enable/disable modules dynamically with JSON configuration
 - **Git Submodules**: Support for managing modules as git submodules
 
 ## Quick Start
@@ -38,27 +41,34 @@ dart run modular_flutter build
 This command:
 - ✅ Auto-discovers all modules in `packages/`
 - ✅ Auto-updates `pubspec.yaml` with module dependencies
-- ✅ Generates `lib/app/modules.dart` with provider registration
 
 ### 4. Use in Your App
+
+**That's it!** Just use `ModularApp` - everything is automatic:
 
 ```dart
 import 'package:flutter/material.dart';
 import 'package:modular_flutter/modular_flutter.dart';
-import 'app/modules.dart'; // Auto-generated!
 
 void main() {
-  final registry = ModuleRegistry(
-    repository: ModuleRepository(localModulesPath: 'packages'),
+  // ModularApp handles everything automatically:
+  // - Auto-discovers modules
+  // - Auto-registers providers
+  // - Auto-builds routes
+  // - Auto-loads menus and translations
+  runApp(
+    ModularApp(
+      title: 'My App',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+    ),
   );
-
-  registerAllModules(registry); // Auto-registers all providers
-  registry.register();
-  registry.boot();
-
-  runApp(MyApp());
 }
 ```
+
+**No manual setup needed!** All modules are discovered, registered, and booted automatically.
 
 ## Why pubspec.yaml?
 
@@ -111,11 +121,99 @@ packages/
     lib/
       providers/
         auth_service_provider.dart
-      routes/
-        auth_route.dart
+      screens/
+        login_screen.dart
+    lang/
+      en.json
+      es.yaml
     module.yaml
     pubspec.yaml
 ```
+
+### module.yaml
+
+```yaml
+name: Auth
+alias: auth
+version: 0.1.0
+enabled: true
+providers:
+  - auth_module.providers.AuthServiceProvider
+routes:
+  - path: /auth/login
+    widget: auth_module.screens.LoginScreen
+menus:
+  primary:
+    - title: Authentication
+      url: /auth
+      icon: lock
+      order: 1
+localizations:
+  - lang/en.json
+  - lang/es.yaml
+```
+
+## Advanced Usage
+
+### Custom Configuration
+
+```dart
+runApp(
+  ModularApp(
+    title: 'My App',
+    config: ModularAppConfig(
+      modulesPath: 'packages', // Custom modules path
+      shouldLoadModule: (module) => module.enabled, // Custom filter
+      onBeforeRegister: (registry) {
+        // Custom logic before registration
+      },
+      onRouteBuilt: (routes) {
+        // Customize routes before use
+        return routes;
+      },
+    ),
+  ),
+);
+```
+
+### Accessing Menus
+
+```dart
+// In any widget
+final primaryMenus = ModularApp.menus?.getMenus('primary') ?? [];
+```
+
+### Accessing Translations
+
+```dart
+// In any widget
+final welcomeText = ModularApp.localizations?.translate('auth', 'welcome');
+```
+
+### Standalone Modules (No Dependency)
+
+Modules can work without `modular_flutter` as a direct dependency:
+
+```dart
+// In your module's service provider
+class AuthServiceProvider implements ModuleProviderInterface {
+  final Module module;
+  
+  AuthServiceProvider(this.module);
+  
+  @override
+  void register() {
+    // Register services
+  }
+  
+  @override
+  void boot() {
+    // Boot services
+  }
+}
+```
+
+Just define everything in `module.yaml` - `modular_flutter` will discover and load it automatically!
 
 ## CLI Commands
 
@@ -123,7 +221,7 @@ packages/
 # Create module
 dart run modular_flutter create <name> [--submodule]
 
-# Auto-sync pubspec.yaml & generate modules.dart
+# Auto-sync pubspec.yaml with discovered modules
 dart run modular_flutter build
 
 # Enable/disable modules

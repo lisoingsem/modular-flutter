@@ -36,6 +36,9 @@ class Module {
   /// Route definitions
   final List<Map<String, dynamic>> routes;
 
+  /// Menu definitions (grouped by menu name)
+  final Map<String, List<Map<String, dynamic>>> menus;
+
   /// Whether the module is enabled
   bool _enabled;
 
@@ -58,6 +61,7 @@ class Module {
     this.requires = const [],
     this.providers = const [],
     this.routes = const [],
+    this.menus = const {},
     bool enabled = true,
   }) : _enabled = enabled;
 
@@ -93,6 +97,20 @@ class Module {
               ?.map((r) => Map<String, dynamic>.from(r as Map))
               .toList() ??
           [];
+      final menusRaw = (yaml['menus'] as Map?);
+      final menus = <String, List<Map<String, dynamic>>>{};
+      if (menusRaw != null) {
+        for (final entry in menusRaw.entries) {
+          final key = entry.key.toString();
+          final value = entry.value;
+          if (value is List) {
+            menus[key] =
+                value.map((m) => Map<String, dynamic>.from(m as Map)).toList();
+          } else {
+            menus[key] = [];
+          }
+        }
+      }
 
       return Module(
         name: name,
@@ -105,6 +123,7 @@ class Module {
         requires: requires,
         providers: providers,
         routes: routes,
+        menus: menus,
         enabled: enabled,
       );
     } catch (e) {

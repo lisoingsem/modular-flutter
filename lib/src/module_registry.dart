@@ -4,18 +4,21 @@ import 'module_provider.dart';
 import 'route_registry.dart';
 import 'localization_registry.dart';
 import 'localization_loader.dart';
+import 'menu_registry.dart';
 import 'exceptions/module_exceptions.dart';
 
 /// Callback type for provider instantiation
-typedef ProviderFactory = ModuleProvider? Function(Module module);
+/// Providers can be ModuleProvider or any class with register()/boot() methods
+typedef ProviderFactory = dynamic Function(Module module);
 
 /// Registry for managing module registration and booting
 class ModuleRegistry {
   final ModuleRepository repository;
   final RouteRegistry routeRegistry;
   final LocalizationRegistry localizationRegistry;
+  final MenuRegistry menuRegistry;
   final Map<String, ProviderFactory> _providerFactories = {};
-  final List<ModuleProvider> _providers = [];
+  final List<dynamic> _providers = []; // Can be ModuleProvider or any class
   final bool autoDiscoverProviders;
   bool _registered = false;
   bool _booted = false;
@@ -24,6 +27,7 @@ class ModuleRegistry {
     ModuleRepository? repository,
     RouteRegistry? routeRegistry,
     LocalizationRegistry? localizationRegistry,
+    MenuRegistry? menuRegistry,
     String? localModulesPath,
     this.autoDiscoverProviders = false,
   })  : repository =
@@ -31,6 +35,11 @@ class ModuleRegistry {
         routeRegistry = routeRegistry ?? RouteRegistry(),
         localizationRegistry = localizationRegistry ??
             LocalizationRegistry(
+              repository: repository ??
+                  ModuleRepository(localModulesPath: localModulesPath),
+            ),
+        menuRegistry = menuRegistry ??
+            MenuRegistry(
               repository: repository ??
                   ModuleRepository(localModulesPath: localModulesPath),
             );
@@ -91,9 +100,22 @@ class ModuleRegistry {
         if (factory != null) {
           final provider = factory(module);
           if (provider != null) {
-            // Set localization registry for provider
-            provider.setLocalizationRegistry(localizationRegistry);
-            provider.register();
+            // Set localization registry if provider supports it (ModuleProvider)
+            if (provider is ModuleProvider) {
+              provider.setLocalizationRegistry(localizationRegistry);
+            }
+            // Call register() if it exists (works for both ModuleProvider and plain classes)
+            try {
+              // Use dynamic call to support both ModuleProvider and plain classes
+              if (provider is ModuleProvider) {
+                provider.register();
+              } else {
+                // Try to call register() on plain class using noSuchMethod
+                (provider as dynamic).register();
+              }
+            } catch (e) {
+              // Provider might not have register() - that's OK, skip it
+            }
             _providers.add(provider);
           }
         } else {
@@ -111,6 +133,11 @@ class ModuleRegistry {
 
     // Register routes
     routeRegistry.registerModuleRoutes(module);
+
+    // Register menus (from module.yaml)
+    if (module.menus.isNotEmpty) {
+      menuRegistry.registerModuleMenus(module);
+    }
 
     // Register localizations (only for enabled modules)
     if (module.enabled) {
@@ -135,7 +162,13 @@ class ModuleRegistry {
     // Boot all providers
     for (final provider in _providers) {
       try {
-        provider.boot();
+        // Call boot() if it exists (works for both ModuleProvider and plain classes)
+        if (provider is ModuleProvider) {
+          provider.boot();
+        } else {
+          // Try to call boot() on plain class using dynamic
+          (provider as dynamic).boot();
+        }
       } catch (e) {
         print('Warning: Failed to boot provider: $e');
       }

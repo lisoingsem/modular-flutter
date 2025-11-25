@@ -4,6 +4,8 @@ import 'module_repository.dart';
 import 'internal/route_resolver.dart';
 import 'internal/provider_loader.dart';
 import 'modular_app_config.dart';
+import 'menu_registry.dart';
+import 'localization_registry.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
@@ -32,6 +34,13 @@ class ModularApp extends StatefulWidget {
   /// Get the registry (like Laravel's Module facade)
   /// Only available after the app is built
   static ModuleRegistry? get registry => _registry;
+
+  /// Get menu registry (convenience method)
+  static MenuRegistry? get menus => _registry?.menuRegistry;
+
+  /// Get localization registry (convenience method)
+  static LocalizationRegistry? get localizations =>
+      _registry?.localizationRegistry;
 
   // Internal registry instance
   static ModuleRegistry? _registry;
