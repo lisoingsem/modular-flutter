@@ -385,9 +385,10 @@ class _ModularAppState extends State<ModularApp> {
       for (final entry in _routes!.entries) {
         if (entry.value != null) {
           // Wrap route builder to catch any null check errors
+          final builder = entry.value;
           routes[entry.key] = (context) {
             try {
-              return entry.value!(context);
+              return builder(context);
             } catch (e, stackTrace) {
               print('Error in route builder for "${entry.key}": $e');
               print('Stack trace: $stackTrace');
