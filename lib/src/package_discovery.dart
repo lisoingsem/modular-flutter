@@ -95,41 +95,53 @@ class PackageDiscovery {
     print('PackageDiscovery._discoverFromDirectory: Checking $modulesPath');
     final modulesDir = Directory(modulesPath);
     if (!modulesDir.existsSync()) {
-      print('PackageDiscovery._discoverFromDirectory: Directory does not exist: $modulesPath');
+      print(
+          'PackageDiscovery._discoverFromDirectory: Directory does not exist: $modulesPath');
       return [];
     }
 
     final entries = modulesDir.listSync();
-    print('PackageDiscovery._discoverFromDirectory: Found ${entries.length} entries');
+    print(
+        'PackageDiscovery._discoverFromDirectory: Found ${entries.length} entries');
     final modules = <Module>[];
     for (final entity in entries) {
       if (entity is! Directory) {
-        print('PackageDiscovery._discoverFromDirectory: Skipping non-directory: ${entity.path}');
+        print(
+            'PackageDiscovery._discoverFromDirectory: Skipping non-directory: ${entity.path}');
         continue;
       }
-      print('PackageDiscovery._discoverFromDirectory: Checking directory: ${entity.path}');
+      print(
+          'PackageDiscovery._discoverFromDirectory: Checking directory: ${entity.path}');
       final moduleYaml = File(path.join(entity.path, 'module.yaml'));
       if (!moduleYaml.existsSync()) {
-        print('PackageDiscovery._discoverFromDirectory: No module.yaml in ${entity.path}');
+        print(
+            'PackageDiscovery._discoverFromDirectory: No module.yaml in ${entity.path}');
         continue;
       }
       try {
-        print('PackageDiscovery._discoverFromDirectory: Loading module from ${entity.path}');
+        print(
+            'PackageDiscovery._discoverFromDirectory: Loading module from ${entity.path}');
         final module = Module.fromPath(entity.path);
-        print('PackageDiscovery._discoverFromDirectory: Loaded module: ${module.name} (alias: ${module.alias}, enabled: ${module.enabled})');
+        print(
+            'PackageDiscovery._discoverFromDirectory: Loaded module: ${module.name} (alias: ${module.alias}, enabled: ${module.enabled})');
         // Only add if enabled (if activator is provided)
         if (activator == null || activator.hasStatus(module, true)) {
-          print('PackageDiscovery._discoverFromDirectory: Adding module: ${module.alias}');
+          print(
+              'PackageDiscovery._discoverFromDirectory: Adding module: ${module.alias}');
           modules.add(module);
         } else {
-          print('PackageDiscovery._discoverFromDirectory: Skipping disabled module: ${module.alias}');
+          print(
+              'PackageDiscovery._discoverFromDirectory: Skipping disabled module: ${module.alias}');
         }
       } catch (e, stackTrace) {
-        print('PackageDiscovery._discoverFromDirectory: Error loading module at ${entity.path}: $e');
-        print('PackageDiscovery._discoverFromDirectory: Stack trace: $stackTrace');
+        print(
+            'PackageDiscovery._discoverFromDirectory: Error loading module at ${entity.path}: $e');
+        print(
+            'PackageDiscovery._discoverFromDirectory: Stack trace: $stackTrace');
       }
     }
-    print('PackageDiscovery._discoverFromDirectory: Returning ${modules.length} modules from $modulesPath');
+    print(
+        'PackageDiscovery._discoverFromDirectory: Returning ${modules.length} modules from $modulesPath');
     return modules;
   }
 
