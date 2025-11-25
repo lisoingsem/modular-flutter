@@ -201,7 +201,8 @@ class _ModularAppState extends State<ModularApp> {
       if (widget.additionalRoutes != null) {
         routes = {
           ...routes, // Module routes first
-          ...widget.additionalRoutes!, // Additional routes override module routes (last wins)
+          ...widget
+              .additionalRoutes!, // Additional routes override module routes (last wins)
         };
       }
 
