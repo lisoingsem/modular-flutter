@@ -6,6 +6,7 @@ import 'internal/provider_loader.dart';
 import 'modular_app_config.dart';
 import 'menu_registry.dart';
 import 'localization_registry.dart';
+import 'module_auto_register.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
@@ -74,7 +75,12 @@ class _ModularAppState extends State<ModularApp> {
     // Set static registry for access
     ModularApp._registry = _registry;
 
-    // Auto-register providers if enabled
+    // Initialize auto-registered providers (Laravel-style - no code generation!)
+    // Modules register themselves via ModuleAutoRegister when their package is loaded
+    // This works like Laravel's auto-discovery - pure runtime discovery
+    ModuleAutoRegister.initialize(_registry!);
+
+    // Auto-register providers if enabled (legacy support)
     if (config.autoRegisterProviders) {
       await _autoRegisterProviders(_registry!, config);
     }

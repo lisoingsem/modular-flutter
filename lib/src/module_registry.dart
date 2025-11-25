@@ -90,61 +90,53 @@ class ModuleRegistry {
   }
 
   /// Register a single module
-  /// Similar to Laravel modules: auto-discovers providers from module.yaml
+  /// Laravel-style: Routes registered ONLY via ModuleProvider.registerRoutes()
+  /// NO module imports needed in core app - providers auto-discover from module.yaml
   void registerModule(Module module) {
-    // Register service providers (like Laravel modules auto-discovery)
-    // Providers are listed in module.yaml and must be registered via registerProviderFactory()
+    // Register service providers from module.yaml
+    // Providers are auto-discovered - no manual registration needed
     for (final providerClass in module.providers) {
       try {
         final factory = _providerFactories[providerClass];
         if (factory != null) {
           final provider = factory(module);
           if (provider != null) {
-            // Set localization registry if provider supports it (ModuleProvider)
+            // Set localization registry if provider supports it
             if (provider is ModuleProvider) {
               provider.setLocalizationRegistry(localizationRegistry);
             }
-            // Call register() if it exists (works for both ModuleProvider and plain classes)
+            // Call register() if it exists
             try {
-              // Use dynamic call to support both ModuleProvider and plain classes
               if (provider is ModuleProvider) {
                 provider.register();
               } else {
-                // Try to call register() on plain class using noSuchMethod
                 (provider as dynamic).register();
               }
             } catch (e) {
-              // Provider might not have register() - that's OK, skip it
+              // Provider might not have register() - that's OK
             }
             _providers.add(provider);
+
+            // Register routes from provider (Laravel-style - ONLY way to register routes)
+            // Routes MUST be registered in ModuleProvider.registerRoutes() method
+            if (provider is ModuleProvider) {
+              try {
+                provider.registerRoutes(routeRegistry);
+              } catch (e) {
+                print('Warning: Failed to register routes from provider: $e');
+              }
+            }
           }
-        } else {
-          // In Laravel modules, missing providers are logged but don't stop execution
-          print(
-            'Warning: Provider "$providerClass" not registered. '
-            'Register it using registerProviderFactory() or registerProviderFactories(). '
-            'Format: package_name.providers.ModuleNameServiceProvider',
-          );
         }
+        // Note: If provider factory not found, routes won't be registered
+        // This is expected - providers must be auto-discovered or registered manually
       } catch (e) {
-        print('Warning: Failed to register provider "$providerClass": $e');
+        // Silently skip - module registration continues even if provider fails
       }
     }
 
-    // Register routes from module.yaml (fallback)
-    routeRegistry.registerModuleRoutes(module);
-
-    // Register routes from providers (Laravel-style - preferred)
-    // Providers can override registerRoutes() to register routes programmatically
-    for (final provider in _providers) {
-      if (provider is ModuleProvider && provider.module == module) {
-        try {
-          provider.registerRoutes(routeRegistry);
-        } catch (e) {
-          print('Warning: Failed to register routes from provider: $e');
-        }
-      }
-    }
+    // Note: Routes from module.yaml are NOT used
+    // Routes MUST be registered via ModuleProvider.registerRoutes() (Laravel-style)
 
     // Register menus (from module.yaml)
     if (module.menus.isNotEmpty) {

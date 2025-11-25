@@ -19,6 +19,7 @@ export 'src/exceptions/module_exceptions.dart';
 export 'src/modular_app.dart'; // Simplified app wrapper
 export 'src/modular_app_config.dart'; // Configuration for ModularApp
 export 'src/menu_registry.dart'; // Menu registry for module menus
+export 'src/module_auto_register.dart'; // Auto-registration system (Laravel-style)
 
 // Internal implementation - NOT exported (modules should not use these directly)
 // - AssetLoader (internal)

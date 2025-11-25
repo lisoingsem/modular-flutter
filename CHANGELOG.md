@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - 2025-01-19
+
+### Fixed
+- Removed all code generation - pure runtime discovery
+- Fixed duplicate ProviderFactory export issue
+- Removed unused imports and generated file references
+- Clean build command - only syncs pubspec.yaml
+
 ## [0.4.0] - 2025-01-19
 
 ### Added

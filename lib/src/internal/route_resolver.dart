@@ -19,32 +19,13 @@ class RouteResolver {
 
   /// Build all routes from RouteRegistry
   /// Returns a map of route paths to WidgetBuilders
-  /// Laravel-style: Uses runtime-registered routes first, then falls back to YAML routes
+  /// Laravel-style: Routes registered ONLY via ModuleProvider.registerRoutes()
+  /// NO module.yaml routes - everything through providers
   Map<String, WidgetBuilder> buildRoutesFromRegistry(
     RouteRegistry routeRegistry,
   ) {
-    final routes = <String, WidgetBuilder>{};
-
-    // First, use runtime-registered routes (Laravel-style - preferred)
-    routes.addAll(routeRegistry.getAllBuilders());
-
-    // Then, try to resolve routes from module.yaml (fallback)
-    final allRoutes = routeRegistry.getAllRoutes();
-    for (final route in allRoutes) {
-      // Only add if not already registered by a provider
-      if (!routes.containsKey(route.path)) {
-        final builder = resolveRoute(route.widget);
-        if (builder != null) {
-          routes[route.path] = builder;
-        } else {
-          print(
-            'Warning: Could not resolve route widget "${route.widget}" for path "${route.path}". '
-            'Register it in your ModuleProvider.registerRoutes() method instead.',
-          );
-        }
-      }
-    }
-
-    return routes;
+    // Routes are registered ONLY via ModuleProvider.registerRoutes() (Laravel-style)
+    // No fallback to module.yaml - routes must be in providers
+    return Map.unmodifiable(routeRegistry.getAllBuilders());
   }
 }
