@@ -2,8 +2,10 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
+import 'package:flutter/material.dart';
 import 'module.dart';
 import 'localization_registry.dart';
+import 'route_registry.dart';
 
 /// Base class for module service providers
 /// Similar to Laravel's service providers
@@ -23,6 +25,20 @@ abstract class ModuleProvider {
 
   /// Register services (called during module registration)
   void register() {}
+
+  /// Register routes for this module
+  /// Similar to Laravel's RouteServiceProvider::map()
+  /// Override this method to register routes programmatically
+  ///
+  /// Example:
+  /// ```dart
+  /// @override
+  /// void registerRoutes(RouteRegistry registry) {
+  ///   registry.register('/auth', (context) => const AuthRoute());
+  ///   registry.register('/auth/login', (context) => const LoginScreen());
+  /// }
+  /// ```
+  void registerRoutes(RouteRegistry registry) {}
 
   /// Boot services (called after all modules are registered)
   void boot() {}

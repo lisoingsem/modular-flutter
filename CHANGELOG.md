@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2025-01-19
+
+### Added
+- **Laravel-Style Runtime Route Discovery** - Routes registered at runtime through `ModuleProvider.registerRoutes()` method
+- **No Code Generation Required** - Pure runtime discovery, no build commands needed
+- **RouteRegistry.register()** - Direct route registration with WidgetBuilder (like Laravel's Route::get())
+
+### Changed
+- **Breaking**: Routes now registered in `ModuleProvider.registerRoutes()` instead of module.yaml (module.yaml still works as fallback)
+- **RouteResolver** - Now prioritizes runtime-registered routes over YAML-defined routes
+- Removed all code generation logic for routes
+
+### Improved
+- **True Laravel-Style Discovery** - Modules discovered and routes registered at runtime, just like Laravel modules
+- **Simpler Architecture** - No generated files, no build commands, pure runtime discovery
+- Better error messages when routes can't be resolved
+
 ## [0.3.2] - 2025-01-XX
 
 ### Fixed

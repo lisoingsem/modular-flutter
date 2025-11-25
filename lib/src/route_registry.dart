@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'module.dart';
 
 /// Route definition from a module
@@ -6,12 +7,14 @@ class ModuleRoute {
   final String widget;
   final String? name;
   final Map<String, dynamic>? parameters;
+  final WidgetBuilder? builder; // Runtime builder (Laravel-style)
 
   ModuleRoute({
     required this.path,
     required this.widget,
     this.name,
     this.parameters,
+    this.builder,
   });
 
   factory ModuleRoute.fromMap(Map<String, dynamic> map) {
@@ -34,10 +37,22 @@ class ModuleRoute {
 }
 
 /// Registry for managing routes from modules
+/// Laravel-style: routes registered at runtime through providers
 class RouteRegistry {
   final Map<String, ModuleRoute> _routes = {};
+  final Map<String, WidgetBuilder> _builders = {}; // Direct route builders
 
-  /// Register routes from a module
+  /// Register a route with a WidgetBuilder (Laravel-style)
+  /// This is the preferred method - modules call this in their providers
+  void register(String path, WidgetBuilder builder, {String? name}) {
+    _builders[path] = builder;
+    if (name != null) {
+      _builders[name] = builder;
+    }
+  }
+
+  /// Register routes from a module (from module.yaml)
+  /// This is a fallback for modules that define routes in YAML
   void registerModuleRoutes(Module module) {
     for (final routeMap in module.routes) {
       final route = ModuleRoute.fromMap(routeMap);
@@ -51,6 +66,16 @@ class RouteRegistry {
     return _routes.values.toList();
   }
 
+  /// Get all route builders (Laravel-style runtime routes)
+  Map<String, WidgetBuilder> getAllBuilders() {
+    return Map.unmodifiable(_builders);
+  }
+
+  /// Get a route builder by path (Laravel-style)
+  WidgetBuilder? getBuilder(String path) {
+    return _builders[path];
+  }
+
   /// Get a route by name or path
   ModuleRoute? getRoute(String nameOrPath) {
     return _routes[nameOrPath] ??
@@ -62,16 +87,14 @@ class RouteRegistry {
 
   /// Check if a route exists
   bool hasRoute(String nameOrPath) {
-    try {
-      getRoute(nameOrPath);
-      return true;
-    } catch (e) {
-      return false;
-    }
+    return _builders.containsKey(nameOrPath) ||
+        _routes.containsKey(nameOrPath) ||
+        _routes.values.any((route) => route.path == nameOrPath);
   }
 
   /// Clear all routes
   void clear() {
     _routes.clear();
+    _builders.clear();
   }
 }

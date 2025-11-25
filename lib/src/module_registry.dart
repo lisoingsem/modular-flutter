@@ -131,8 +131,20 @@ class ModuleRegistry {
       }
     }
 
-    // Register routes
+    // Register routes from module.yaml (fallback)
     routeRegistry.registerModuleRoutes(module);
+
+    // Register routes from providers (Laravel-style - preferred)
+    // Providers can override registerRoutes() to register routes programmatically
+    for (final provider in _providers) {
+      if (provider is ModuleProvider && provider.module == module) {
+        try {
+          provider.registerRoutes(routeRegistry);
+        } catch (e) {
+          print('Warning: Failed to register routes from provider: $e');
+        }
+      }
+    }
 
     // Register menus (from module.yaml)
     if (module.menus.isNotEmpty) {
