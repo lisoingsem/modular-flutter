@@ -16,89 +16,15 @@ class PackageDiscovery {
     Activator? activator,
     String? localModulesPath,
   }) async {
-    print('PackageDiscovery: Using package_config.json for discovery (Melos-style)');
-    
+    print(
+        'PackageDiscovery: Using package_config.json for discovery (Melos-style)');
+
     // ONLY use package_config.json - no directory scanning
     // This works on all platforms and doesn't need project root
     final packageModules = await _discoverFromPackages(null, activator);
     return packageModules;
   }
 
-  /// Get project root - works on both web and native platforms
-  static String _getProjectRoot() {
-    if (kIsWeb) {
-      // On web, we can't use Directory.current, so return a default
-      // The actual path resolution will be handled by package_config.json
-      return '';
-    }
-    try {
-      return Directory.current.path;
-    } catch (e) {
-      // Fallback if Directory.current fails
-      return '';
-    }
-  }
-
-  /// Discover modules from a directory
-  static List<Module> _discoverFromDirectory(
-      String modulesPath, Activator? activator) {
-    // On web, skip file system operations
-    if (kIsWeb) {
-      return [];
-    }
-
-    print('PackageDiscovery._discoverFromDirectory: Checking $modulesPath');
-    final modulesDir = Directory(modulesPath);
-    if (!modulesDir.existsSync()) {
-      print(
-          'PackageDiscovery._discoverFromDirectory: Directory does not exist: $modulesPath');
-      return [];
-    }
-
-    final entries = modulesDir.listSync();
-    print(
-        'PackageDiscovery._discoverFromDirectory: Found ${entries.length} entries');
-    final modules = <Module>[];
-    for (final entity in entries) {
-      if (entity is! Directory) {
-        print(
-            'PackageDiscovery._discoverFromDirectory: Skipping non-directory: ${entity.path}');
-        continue;
-      }
-      print(
-          'PackageDiscovery._discoverFromDirectory: Checking directory: ${entity.path}');
-      final moduleYaml = File(path.join(entity.path, 'module.yaml'));
-      if (!moduleYaml.existsSync()) {
-        print(
-            'PackageDiscovery._discoverFromDirectory: No module.yaml in ${entity.path}');
-        continue;
-      }
-      try {
-        print(
-            'PackageDiscovery._discoverFromDirectory: Loading module from ${entity.path}');
-        final module = Module.fromPath(entity.path);
-        print(
-            'PackageDiscovery._discoverFromDirectory: Loaded module: ${module.name} (alias: ${module.alias}, enabled: ${module.enabled})');
-        // Only add if enabled (if activator is provided)
-        if (activator == null || activator.hasStatus(module, true)) {
-          print(
-              'PackageDiscovery._discoverFromDirectory: Adding module: ${module.alias}');
-          modules.add(module);
-        } else {
-          print(
-              'PackageDiscovery._discoverFromDirectory: Skipping disabled module: ${module.alias}');
-        }
-      } catch (e, stackTrace) {
-        print(
-            'PackageDiscovery._discoverFromDirectory: Error loading module at ${entity.path}: $e');
-        print(
-            'PackageDiscovery._discoverFromDirectory: Stack trace: $stackTrace');
-      }
-    }
-    print(
-        'PackageDiscovery._discoverFromDirectory: Returning ${modules.length} modules from $modulesPath');
-    return modules;
-  }
 
   /// Discover modules from installed packages using package_config.json
   /// This is the ONLY discovery method (like Melos)
@@ -108,34 +34,40 @@ class PackageDiscovery {
 
     // Find package_config.json - try multiple locations
     String? packageConfigPath;
-    
+
     // Try 1: Relative to current directory (works in most cases)
     var configFile = File('.dart_tool/package_config.json');
     if (configFile.existsSync()) {
       packageConfigPath = configFile.path;
-      print('PackageDiscovery: Found package_config.json at: $packageConfigPath');
+      print(
+          'PackageDiscovery: Found package_config.json at: $packageConfigPath');
     } else {
       // Try 2: Use projectRoot if provided
       if (projectRoot != null && projectRoot.isNotEmpty && projectRoot != '/') {
-        configFile = File(path.join(projectRoot, '.dart_tool', 'package_config.json'));
+        configFile =
+            File(path.join(projectRoot, '.dart_tool', 'package_config.json'));
         if (configFile.existsSync()) {
           packageConfigPath = configFile.path;
-          print('PackageDiscovery: Found package_config.json at: $packageConfigPath');
+          print(
+              'PackageDiscovery: Found package_config.json at: $packageConfigPath');
         }
       }
-      
+
       // Try 3: Look in parent directories (up to 5 levels)
       if (packageConfigPath == null) {
         var currentDir = Directory.current;
         for (int i = 0; i < 5; i++) {
-          configFile = File(path.join(currentDir.path, '.dart_tool', 'package_config.json'));
+          configFile = File(
+              path.join(currentDir.path, '.dart_tool', 'package_config.json'));
           if (configFile.existsSync()) {
             packageConfigPath = configFile.path;
-            print('PackageDiscovery: Found package_config.json at: $packageConfigPath');
+            print(
+                'PackageDiscovery: Found package_config.json at: $packageConfigPath');
             break;
           }
           currentDir = currentDir.parent;
-          if (!currentDir.existsSync() || currentDir.path == currentDir.parent.path) {
+          if (!currentDir.existsSync() ||
+              currentDir.path == currentDir.parent.path) {
             break;
           }
         }
@@ -143,7 +75,8 @@ class PackageDiscovery {
     }
 
     if (packageConfigPath == null) {
-      print('PackageDiscovery: package_config.json not found - no modules will be discovered');
+      print(
+          'PackageDiscovery: package_config.json not found - no modules will be discovered');
       return modules;
     }
 
