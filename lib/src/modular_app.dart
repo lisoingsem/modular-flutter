@@ -113,7 +113,14 @@ class _ModularAppState extends State<ModularApp> {
 
       // Build routes
       if (config.autoBuildRoutes) {
-        _routes = _buildRoutes(_registry!, config);
+        try {
+          _routes = _buildRoutes(_registry!, config);
+        } catch (e) {
+          print('Warning: Error building routes: $e');
+          _routes = {}; // Fallback to empty routes
+        }
+      } else {
+        _routes = {};
       }
     });
 
@@ -208,8 +215,13 @@ class _ModularAppState extends State<ModularApp> {
     if (config.onRouteBuilt != null) {
       try {
         final hookResult = config.onRouteBuilt!(routes);
-        // Ensure hook result is valid
-        final validHookRoutes = Map<String, WidgetBuilder>.from(hookResult);
+        // Ensure hook result is valid and filter out nulls
+        final validHookRoutes = <String, WidgetBuilder>{};
+        for (final entry in hookResult.entries) {
+          if (entry.value != null) {
+            validHookRoutes[entry.key] = entry.value;
+          }
+        }
         // Hook result overrides everything (last order wins)
         routes = {
           ...routes,
@@ -222,6 +234,10 @@ class _ModularAppState extends State<ModularApp> {
     }
 
     return routes;
+    } catch (e) {
+      print('Warning: Error building routes: $e');
+      return <String, WidgetBuilder>{}; // Return empty routes on error
+    }
   }
 
   /// Auto-import modules at runtime
@@ -352,7 +368,15 @@ class _ModularAppState extends State<ModularApp> {
       );
     }
 
-    final routes = _routes ?? {};
+    // Ensure routes are never null and all builders are valid
+    final routes = <String, WidgetBuilder>{};
+    if (_routes != null) {
+      for (final entry in _routes!.entries) {
+        if (entry.value != null) {
+          routes[entry.key] = entry.value;
+        }
+      }
+    }
 
     // Build MaterialApp with routes - simple and automatic
     return MaterialApp(
@@ -366,6 +390,18 @@ class _ModularAppState extends State<ModularApp> {
       initialRoute: widget.initialRoute,
       home: widget.home,
       navigatorObservers: widget.navigatorObservers ?? [],
+      onGenerateRoute: (settings) {
+        // Safely get route builder
+        final routeBuilder = routes[settings.name];
+        if (routeBuilder != null) {
+          return MaterialPageRoute(
+            builder: routeBuilder,
+            settings: settings,
+          );
+        }
+        // Return null to use onUnknownRoute
+        return null;
+      },
       onUnknownRoute: (settings) {
         // Fallback for unknown routes
         return MaterialPageRoute(
