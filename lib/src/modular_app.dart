@@ -411,7 +411,7 @@ class _ModularAppState extends State<ModularApp> {
       }
     }
 
-    // Build MaterialApp with routes - simple and automatic
+    // Build MaterialApp with routes - use onGenerateRoute only to avoid MaterialApp's internal route access
     return MaterialApp(
       title: widget.title ?? 'Flutter App',
       theme: widget.theme ??
@@ -419,8 +419,8 @@ class _ModularAppState extends State<ModularApp> {
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             useMaterial3: true,
           ),
-      // Only set routes if we have valid routes, otherwise use home
-      routes: routes.isNotEmpty ? routes : {},
+      // Don't use routes parameter - use onGenerateRoute only to have full control
+      routes: {},
       initialRoute: routes.isNotEmpty &&
               widget.initialRoute != null &&
               routes.containsKey(widget.initialRoute)
@@ -433,34 +433,70 @@ class _ModularAppState extends State<ModularApp> {
               const Scaffold(body: Center(child: Text('No routes configured'))))
           : null,
       navigatorObservers: widget.navigatorObservers ?? [],
-      onGenerateRoute: routes.isEmpty
-          ? null
-          : (settings) {
-              // Safely get route builder
-              try {
-                final routeBuilder = routes[settings.name];
-                if (routeBuilder != null) {
-                  return MaterialPageRoute(
-                    builder: (context) {
-                      try {
-                        return routeBuilder(context);
-                      } catch (e) {
-                        print('Error building route "${settings.name}": $e');
-                        return Scaffold(
-                          appBar: AppBar(title: const Text('Error')),
-                          body: Center(child: Text('Error loading route: $e')),
-                        );
-                      }
-                    },
-                    settings: settings,
+      onGenerateRoute: (settings) {
+        // Handle initial route
+        if (settings.name == null || settings.name == '/') {
+          if (routes.containsKey('/')) {
+            try {
+              final routeBuilder = routes['/']!;
+              return MaterialPageRoute(
+                builder: (context) {
+                  try {
+                    return routeBuilder(context);
+                  } catch (e, stackTrace) {
+                    print('Error building route "/": $e');
+                    print('Stack trace: $stackTrace');
+                    return Scaffold(
+                      appBar: AppBar(title: const Text('Error')),
+                      body: Center(child: Text('Error loading route: $e')),
+                    );
+                  }
+                },
+                settings: settings,
+              );
+            } catch (e, stackTrace) {
+              print('Error generating route "/": $e');
+              print('Stack trace: $stackTrace');
+            }
+          }
+          // If no '/' route, use home or show error
+          if (widget.home != null) {
+            return MaterialPageRoute(builder: (_) => widget.home!);
+          }
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(child: Text('No home route configured')),
+            ),
+          );
+        }
+
+        // Handle named routes
+        try {
+          final routeBuilder = routes[settings.name];
+          if (routeBuilder != null) {
+            return MaterialPageRoute(
+              builder: (context) {
+                try {
+                  return routeBuilder(context);
+                } catch (e, stackTrace) {
+                  print('Error building route "${settings.name}": $e');
+                  print('Stack trace: $stackTrace');
+                  return Scaffold(
+                    appBar: AppBar(title: const Text('Error')),
+                    body: Center(child: Text('Error loading route: $e')),
                   );
                 }
-              } catch (e) {
-                print('Error generating route "${settings.name}": $e');
-              }
-              // Return null to use onUnknownRoute
-              return null;
-            },
+              },
+              settings: settings,
+            );
+          }
+        } catch (e, stackTrace) {
+          print('Error generating route "${settings.name}": $e');
+          print('Stack trace: $stackTrace');
+        }
+        // Return null to use onUnknownRoute
+        return null;
+      },
       onUnknownRoute: (settings) {
         // Fallback for unknown routes
         return MaterialPageRoute(
