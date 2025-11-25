@@ -1,6 +1,6 @@
 # Build artifacts
 .dart_tool/
-build/
+/build/
 coverage/
 *.iml
 *.ipr

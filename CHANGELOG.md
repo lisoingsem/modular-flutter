@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.2] - 2025-01-XX
+
+### Fixed
+- Fixed missing `provider_parser.dart` file in published package
+- Updated `.pubignore` to not exclude `lib/src/build/` directory
+
 ## [0.3.1] - 2025-01-XX
 
 ### Fixed
