@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'module_registry.dart';
 import 'module_repository.dart';
 import 'module.dart';
@@ -57,6 +57,8 @@ class _ModularAppState extends State<ModularApp> {
   ModuleRegistry? _registry;
   Map<String, WidgetBuilder>? _routes;
   bool _initialized = false;
+  bool _loggedRoutes = false;
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
@@ -69,6 +71,9 @@ class _ModularAppState extends State<ModularApp> {
 
     final config = widget.config ?? ModularAppConfig.defaults();
     final modulesPath = config.modulesPath ?? _autoDiscoverModulesPath();
+
+    _debugLog(
+        'ModularApp initializing (autoBuildRoutes=${config.autoBuildRoutes}, autoDiscover=${config.autoDiscoverModules})');
 
     // Run heavy I/O operations in a separate isolate/microtask to avoid blocking UI
     await Future.microtask(() async {
@@ -116,12 +121,15 @@ class _ModularAppState extends State<ModularApp> {
       if (config.autoBuildRoutes) {
         try {
           _routes = _buildRoutes(_registry!, config);
+          _logRoutesOnce();
         } catch (e) {
           print('Warning: Error building routes: $e');
           _routes = {}; // Fallback to empty routes
+          _logRoutesOnce();
         }
       } else {
         _routes = {};
+        _logRoutesOnce();
       }
     });
 
@@ -423,8 +431,7 @@ class _ModularAppState extends State<ModularApp> {
       routes.addAll(_routes!);
     }
 
-    // Build MaterialApp with custom route handling
-    // Never set initialRoute - let onGenerateRoute handle everything
+    // Build MaterialApp shell and embed our own Navigator so we fully control routing
     return MaterialApp(
       title: widget.title ?? 'Flutter App',
       theme: widget.theme ??
@@ -432,23 +439,47 @@ class _ModularAppState extends State<ModularApp> {
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             useMaterial3: true,
           ),
-      // Do not rely on MaterialApp route map – everything flows through onGenerateRoute
-      routes: const <String, WidgetBuilder>{},
-      home: widget.home,
-      navigatorObservers: widget.navigatorObservers ?? [],
-      // Never set initialRoute - it causes null check errors
-      // Let onGenerateRoute handle the initial route
-      onGenerateRoute: (settings) {
-        // Ensure settings.name is never null
-        final routeName = settings.name ?? '/';
-        return _handleRouteGeneration(
-          RouteSettings(name: routeName, arguments: settings.arguments),
-          routes,
-          widget,
+      home: null,
+      builder: (context, child) {
+        return Navigator(
+          key: _navigatorKey,
+          initialRoute: widget.initialRoute ?? '/',
+          observers: widget.navigatorObservers ?? [],
+          onGenerateInitialRoutes: (navigator, initialRouteName) {
+            final routeName =
+                (initialRouteName.isEmpty) ? '/' : initialRouteName;
+            final settings = RouteSettings(name: routeName);
+            try {
+              final route = _handleRouteGeneration(settings, routes, widget);
+              return [route];
+            } catch (e, stackTrace) {
+              _debugLog('Error generating initial route "$routeName": $e');
+              _debugLog('Stack trace: $stackTrace');
+              return [_buildErrorRoute(routeName, e)];
+            }
+          },
+          onGenerateRoute: (settings) {
+            final routeName = settings.name ?? '/';
+            try {
+              _debugLog('ModularApp generating route "$routeName"');
+              final route = _handleRouteGeneration(
+                RouteSettings(name: routeName, arguments: settings.arguments),
+                routes,
+                widget,
+              );
+              _debugLog(
+                  'ModularApp generated route "$routeName" -> ${route.runtimeType}');
+              return route;
+            } catch (e, stackTrace) {
+              _debugLog('Error generating route "$routeName": $e');
+              _debugLog('Stack trace: $stackTrace');
+              return _buildErrorRoute(routeName, e);
+            }
+          },
+          onUnknownRoute: (settings) =>
+              _buildNotFoundRoute(settings.name ?? 'unknown'),
         );
       },
-      onUnknownRoute: (settings) =>
-          _buildNotFoundRoute(settings.name ?? 'unknown'),
     );
   }
 
@@ -495,8 +526,8 @@ class _ModularAppState extends State<ModularApp> {
         try {
           return builder(context);
         } catch (e, stackTrace) {
-          print('Error building route "$routeName": $e');
-          print('Stack trace: $stackTrace');
+          _debugLog('Error building route "$routeName": $e');
+          _debugLog('Stack trace: $stackTrace');
           return _buildErrorScaffold(
             title: 'Route Error',
             message: 'Failed to load route "$routeName".',
@@ -512,6 +543,16 @@ class _ModularAppState extends State<ModularApp> {
       builder: (_) => _buildErrorScaffold(
         title: 'Route Not Found',
         message: 'Route "$routeName" does not exist.',
+      ),
+    );
+  }
+
+  Route<dynamic> _buildErrorRoute(String routeName, Object error) {
+    return MaterialPageRoute(
+      builder: (_) => _buildErrorScaffold(
+        title: 'Route Error',
+        message: 'Failed to generate route "$routeName".',
+        error: error.toString(),
       ),
     );
   }
@@ -550,5 +591,20 @@ class _ModularAppState extends State<ModularApp> {
         ),
       ),
     );
+  }
+
+  void _logRoutesOnce() {
+    if (_loggedRoutes) return;
+    final routes = _routes?.keys.toList() ?? const <String>[];
+    _debugLog(
+        'ModularApp registered routes: ${routes.isEmpty ? '<none>' : routes}');
+    _loggedRoutes = true;
+  }
+
+  void _debugLog(String message) {
+    if (kDebugMode) {
+      // ignore: avoid_print
+      print(message);
+    }
   }
 }
