@@ -1,7 +1,7 @@
 #!/usr/bin/env dart
 
 import 'dart:io';
-import '../lib/src/cli/command_runner.dart';
+import 'package:modular_flutter/src/cli/command_runner.dart';
 
 void main(List<String> arguments) async {
   final runner = CommandRunner();

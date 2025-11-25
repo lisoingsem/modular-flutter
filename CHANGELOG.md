@@ -2,23 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.2.0] - 2024-12-XX
+## [0.2.0] - 2025-01-XX
 
 ### Added
-- **ModularApp widget** - Simplified app wrapper that auto-discovers and registers everything
-- **Auto-discovery** - Automatically discovers modules from `packages/` or `modules/` directories
-- **Zero configuration** - No manual setup needed, just like Laravel Modules
-- **Route builder** - `buildRoutesFromRegistry()` helper function
-- **Auto path discovery** - Automatically detects modules path without configuration
+- **Thin App Architecture** - Zero module imports in app, all complexity in package
+- **ModularAppConfig** - Comprehensive configuration with customization hooks
+- **Internal Provider Loader** - Dynamic provider loading without app imports
+- **Internal Route Resolver** - Dynamic route resolution without app imports
+- **Customization Hooks** - `onBeforeRegister`, `onAfterRegister`, `onRouteBuilt`, `onModuleLoaded`, `shouldLoadModule`, `onBeforeBoot`, `onAfterBoot`
+- **Conditional Module Loading** - Support for loading modules based on custom logic
+- **Self-Contained ModularApp** - Handles all discovery, registration, and route building internally
 
 ### Improved
-- **Simplified main.dart** - Minimal setup required, everything auto-discovered
-- **Better documentation** - Clear examples showing Laravel Modules-like usage
-- **Code generation** - Improved `modules.dart` generation with better error handling
+- **Minimal main.dart** - Now just `runApp(ModularApp(title: 'App'))`
+- **No Generated App Files** - Removed `app/modules.dart` and `app/route_builder.dart` generation
+- **Better Architecture** - All complexity moved to package, app stays thin and clean
+- **Easy Customization** - Full control via ModularAppConfig hooks
 
 ### Changed
-- **ModularApp API** - Now handles all registration and booting automatically
-- **Module discovery** - More robust path detection (packages/ or modules/)
+- **Breaking**: Removed `registerAllModules()` function (now handled internally)
+- **Breaking**: Removed `buildRoutesFromRegistry()` from app (now handled internally)
+- **Breaking**: ModularApp no longer requires manual registry setup
+- **Build Command** - No longer generates app files, only updates `pubspec.yaml`
+
+### Removed
+- `app/modules.dart` generation (handled internally)
+- `app/route_builder.dart` requirement (handled internally)
 
 ## [0.1.2] - 2024-12-XX
 

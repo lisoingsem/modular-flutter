@@ -17,6 +17,7 @@ export 'src/activator.dart';
 export 'src/module_filter.dart';
 export 'src/exceptions/module_exceptions.dart';
 export 'src/modular_app.dart'; // Simplified app wrapper
+export 'src/modular_app_config.dart'; // Configuration for ModularApp
 
 // Internal implementation - NOT exported (modules should not use these directly)
 // - AssetLoader (internal)

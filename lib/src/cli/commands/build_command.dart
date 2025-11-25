@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
-import '../../build/generator.dart';
 import '../../module_repository.dart';
 import '../command.dart';
 
@@ -39,21 +38,15 @@ class BuildCommand implements Command {
         return 1;
       }
 
-      print('Generating modules.dart...');
-
-      final generator = ModuleCodeGenerator(
-        projectRoot: projectRoot,
-        localModulesPath: modulesPath,
-      );
-      await generator.generate();
-
-      print('✓ Successfully generated modules.dart');
+      print('✓ Build complete');
       print('');
-      print('Next steps:');
-      print('  1. Import modules.dart in your main.dart:');
-      print("     import 'app/modules.dart';");
-      print(
-          '  2. Call registerAllModules(registry) before registry.register()');
+      print('Note: Module registration and route building are now handled');
+      print('automatically by ModularApp. No manual setup needed!');
+      print('');
+      print('Your main.dart can now be as simple as:');
+      print('  void main() {');
+      print("    runApp(ModularApp(title: 'My App'));");
+      print('  }');
 
       return 0;
     } catch (e) {
@@ -126,8 +119,8 @@ class BuildCommand implements Command {
       final moduleNames = discoveredModules.keys.toList()..sort();
       final lines = pubspecContent.split('\n');
       final result = <String>[];
-          bool inDependencies = false;
-          int depsIndent = 0;
+      bool inDependencies = false;
+      int depsIndent = 0;
 
       for (int i = 0; i < lines.length; i++) {
         final line = lines[i];
