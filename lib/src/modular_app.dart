@@ -384,7 +384,28 @@ class _ModularAppState extends State<ModularApp> {
     if (_routes != null) {
       for (final entry in _routes!.entries) {
         if (entry.value != null) {
-          routes[entry.key] = entry.value;
+          // Wrap route builder to catch any null check errors
+          routes[entry.key] = (context) {
+            try {
+              return entry.value!(context);
+            } catch (e, stackTrace) {
+              print('Error in route builder for "${entry.key}": $e');
+              print('Stack trace: $stackTrace');
+              return Scaffold(
+                appBar: AppBar(title: const Text('Error')),
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Error loading route'),
+                      Text('Route: ${entry.key}'),
+                      Text('Error: $e'),
+                    ],
+                  ),
+                ),
+              );
+            }
+          };
         }
       }
     }
