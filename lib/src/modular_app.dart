@@ -338,6 +338,17 @@ class _ModularAppState extends State<ModularApp> {
             child: CircularProgressIndicator(),
           ),
         ),
+        // Prevent route generation during initialization
+        onGenerateRoute: (settings) {
+          // Return loading screen for any route during initialization
+          return MaterialPageRoute(
+            builder: (context) => const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          );
+        },
       );
     }
 
@@ -362,8 +373,20 @@ class _ModularAppState extends State<ModularApp> {
               useMaterial3: true,
             ),
         routes: validRoutes,
-        initialRoute: widget.initialRoute,
+        initialRoute: widget.initialRoute ?? '/',
         navigatorObservers: widget.navigatorObservers ?? [],
+        onGenerateRoute: (settings) {
+          // First check if route exists in validRoutes
+          final routeBuilder = validRoutes[settings.name];
+          if (routeBuilder != null) {
+            return MaterialPageRoute(
+              builder: routeBuilder,
+              settings: settings,
+            );
+          }
+          // Return null to let onUnknownRoute handle it
+          return null;
+        },
         onUnknownRoute: (settings) {
           // Fallback for unknown routes
           return MaterialPageRoute(
@@ -373,6 +396,7 @@ class _ModularAppState extends State<ModularApp> {
                 child: Text('Route "${settings.name}" not found'),
               ),
             ),
+            settings: settings,
           );
         },
       );
@@ -391,6 +415,18 @@ class _ModularAppState extends State<ModularApp> {
         initialRoute: widget.initialRoute,
         home: widget.home,
         navigatorObservers: widget.navigatorObservers ?? [],
+        onGenerateRoute: (settings) {
+          // Check if route exists in validRoutes
+          final routeBuilder = validRoutes[settings.name];
+          if (routeBuilder != null) {
+            return MaterialPageRoute(
+              builder: routeBuilder,
+              settings: settings,
+            );
+          }
+          // If no route found and no home, return null to use onUnknownRoute
+          return null;
+        },
         onUnknownRoute: (settings) {
           // Fallback for unknown routes
           return MaterialPageRoute(
@@ -400,6 +436,7 @@ class _ModularAppState extends State<ModularApp> {
                 child: Text('Route "${settings.name}" not found'),
               ),
             ),
+            settings: settings,
           );
         },
       );
