@@ -197,26 +197,11 @@ class _ModularAppState extends State<ModularApp> {
       final resolver = RouteResolver();
       var routes = resolver.buildRoutesFromRegistry(registry.routeRegistry);
 
-      // Ensure all route builders are valid (filter out any potential nulls)
-      final validRoutes = <String, WidgetBuilder>{};
-      for (final entry in routes.entries) {
-        if (entry.value != null) {
-          validRoutes[entry.key] = entry.value;
-        }
-      }
-      routes = validRoutes;
-
       // Merge additional routes (last order wins - additionalRoutes override module routes)
       if (widget.additionalRoutes != null) {
-        final additionalRoutes = <String, WidgetBuilder>{};
-        for (final entry in widget.additionalRoutes!.entries) {
-          if (entry.value != null) {
-            additionalRoutes[entry.key] = entry.value;
-          }
-        }
         routes = {
           ...routes, // Module routes first
-          ...additionalRoutes, // Additional routes override module routes (last wins)
+          ...widget.additionalRoutes!, // Additional routes override module routes (last wins)
         };
       }
 
@@ -227,16 +212,10 @@ class _ModularAppState extends State<ModularApp> {
         try {
           final hookResult = config.onRouteBuilt!(routes);
           // Ensure hook result is valid and filter out nulls
-          final validHookRoutes = <String, WidgetBuilder>{};
-          for (final entry in hookResult.entries) {
-            if (entry.value != null) {
-              validHookRoutes[entry.key] = entry.value;
-            }
-          }
           // Hook result overrides everything (last order wins)
           routes = {
             ...routes,
-            ...validHookRoutes, // Hook routes override all previous routes
+            ...hookResult, // Hook routes override all previous routes
           };
         } catch (e) {
           print('Warning: Error in onRouteBuilt hook: $e');
@@ -382,36 +361,10 @@ class _ModularAppState extends State<ModularApp> {
     // Ensure routes are never null and all builders are valid
     final routes = <String, WidgetBuilder>{};
     if (_routes != null) {
-      for (final entry in _routes!.entries) {
-        if (entry.value != null) {
-          // Wrap route builder to catch any null check errors
-          final builder = entry.value;
-          routes[entry.key] = (context) {
-            try {
-              return builder(context);
-            } catch (e, stackTrace) {
-              print('Error in route builder for "${entry.key}": $e');
-              print('Stack trace: $stackTrace');
-              return Scaffold(
-                appBar: AppBar(title: const Text('Error')),
-                body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Error loading route'),
-                      Text('Route: ${entry.key}'),
-                      Text('Error: $e'),
-                    ],
-                  ),
-                ),
-              );
-            }
-          };
-        }
-      }
+      routes.addAll(_routes!);
     }
 
-    // Build MaterialApp with routes - use onGenerateRoute only to avoid MaterialApp's internal route access
+    // Build MaterialApp with custom route handling
     return MaterialApp(
       title: widget.title ?? 'Flutter App',
       theme: widget.theme ??
@@ -419,96 +372,112 @@ class _ModularAppState extends State<ModularApp> {
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             useMaterial3: true,
           ),
-      // Don't use routes parameter - use onGenerateRoute only to have full control
-      routes: {},
-      initialRoute: routes.isNotEmpty &&
-              widget.initialRoute != null &&
-              routes.containsKey(widget.initialRoute)
-          ? widget.initialRoute
-          : null,
-      home: routes.isEmpty ||
-              (widget.initialRoute != null &&
-                  !routes.containsKey(widget.initialRoute))
-          ? (widget.home ??
-              const Scaffold(body: Center(child: Text('No routes configured'))))
-          : null,
+      // Do not rely on MaterialApp route map – everything flows through onGenerateRoute
+      routes: const <String, WidgetBuilder>{},
+      home: widget.home,
       navigatorObservers: widget.navigatorObservers ?? [],
-      onGenerateRoute: (settings) {
-        // Handle initial route
-        if (settings.name == null || settings.name == '/') {
-          if (routes.containsKey('/')) {
-            try {
-              final routeBuilder = routes['/']!;
-              return MaterialPageRoute(
-                builder: (context) {
-                  try {
-                    return routeBuilder(context);
-                  } catch (e, stackTrace) {
-                    print('Error building route "/": $e');
-                    print('Stack trace: $stackTrace');
-                    return Scaffold(
-                      appBar: AppBar(title: const Text('Error')),
-                      body: Center(child: Text('Error loading route: $e')),
-                    );
-                  }
-                },
-                settings: settings,
-              );
-            } catch (e, stackTrace) {
-              print('Error generating route "/": $e');
-              print('Stack trace: $stackTrace');
-            }
-          }
-          // If no '/' route, use home or show error
-          if (widget.home != null) {
-            return MaterialPageRoute(builder: (_) => widget.home!);
-          }
-          return MaterialPageRoute(
-            builder: (_) => const Scaffold(
-              body: Center(child: Text('No home route configured')),
-            ),
+      onGenerateRoute: (settings) =>
+          _handleRouteGeneration(settings, routes, widget),
+      onUnknownRoute: (settings) =>
+          _buildNotFoundRoute(settings.name ?? 'unknown'),
+    );
+  }
+
+  Route<dynamic> _handleRouteGeneration(
+    RouteSettings settings,
+    Map<String, WidgetBuilder> routes,
+    ModularApp widget,
+  ) {
+    final requestedName = settings.name ?? '/';
+
+    // Try exact match first
+    final builder = routes[requestedName];
+    if (builder != null) {
+      return _buildSafeRoute(settings, requestedName, builder);
+    }
+
+    // Handle root route fallback
+    if (requestedName == '/' && widget.home != null) {
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (_) => widget.home!,
+      );
+    }
+
+    // If we have a '/' route registered, use it as a fallback for unknown names
+    if (routes.containsKey('/')) {
+      return _buildSafeRoute(settings, '/', routes['/']!);
+    }
+
+    // Final fallback - show not found
+    return _buildNotFoundRoute(requestedName);
+  }
+
+  Route<dynamic> _buildSafeRoute(
+    RouteSettings settings,
+    String routeName,
+    WidgetBuilder builder,
+  ) {
+    return MaterialPageRoute(
+      settings: settings,
+      builder: (context) {
+        try {
+          return builder(context);
+        } catch (e, stackTrace) {
+          print('Error building route "$routeName": $e');
+          print('Stack trace: $stackTrace');
+          return _buildErrorScaffold(
+            title: 'Route Error',
+            message: 'Failed to load route "$routeName".',
+            error: e.toString(),
           );
         }
+      },
+    );
+  }
 
-        // Handle named routes
-        try {
-          final routeBuilder = routes[settings.name];
-          if (routeBuilder != null) {
-            return MaterialPageRoute(
-              builder: (context) {
-                try {
-                  return routeBuilder(context);
-                } catch (e, stackTrace) {
-                  print('Error building route "${settings.name}": $e');
-                  print('Stack trace: $stackTrace');
-                  return Scaffold(
-                    appBar: AppBar(title: const Text('Error')),
-                    body: Center(child: Text('Error loading route: $e')),
-                  );
-                }
-              },
-              settings: settings,
-            );
-          }
-        } catch (e, stackTrace) {
-          print('Error generating route "${settings.name}": $e');
-          print('Stack trace: $stackTrace');
-        }
-        // Return null to use onUnknownRoute
-        return null;
-      },
-      onUnknownRoute: (settings) {
-        // Fallback for unknown routes
-        return MaterialPageRoute(
-          builder: (context) => Scaffold(
-            appBar: AppBar(title: const Text('Not Found')),
-            body: Center(
-              child: Text('Route "${settings.name}" not found'),
-            ),
+  Route<dynamic> _buildNotFoundRoute(String routeName) {
+    return MaterialPageRoute(
+      builder: (_) => _buildErrorScaffold(
+        title: 'Route Not Found',
+        message: 'Route "$routeName" does not exist.',
+      ),
+    );
+  }
+
+  Widget _buildErrorScaffold({
+    required String title,
+    required String message,
+    String? error,
+  }) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                message,
+                style: const TextStyle(fontSize: 18),
+                textAlign: TextAlign.center,
+              ),
+              if (error != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  error,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.redAccent,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ],
           ),
-          settings: settings,
-        );
-      },
+        ),
+      ),
     );
   }
 }
