@@ -77,9 +77,12 @@ class _ModularAppState extends State<ModularApp> {
 
     // Run heavy I/O operations in a separate microtask to avoid blocking UI
     try {
+      print('ModularApp: Starting initialization...');
       // Auto-discovery: Auto-import modules at runtime
       // This loads modules automatically without needing imports in main.dart
+      print('ModularApp: Auto-importing modules...');
       await _autoImportModules(modulesPath);
+      print('ModularApp: Auto-import complete');
 
       // Create registry
       final repository = ModuleRepository(localModulesPath: modulesPath);
@@ -93,52 +96,52 @@ class _ModularAppState extends State<ModularApp> {
       final scannedModules = await repository.scan();
       print('ModularApp: Scanned ${scannedModules.length} modules');
 
-        // Initialize auto-registered providers (no code generation needed)
-        // Modules register themselves via ModuleAutoRegister when their package is loaded
-        // Pure runtime discovery - modules auto-register themselves
-        ModuleAutoRegister.initialize(_registry!);
+      // Initialize auto-registered providers (no code generation needed)
+      // Modules register themselves via ModuleAutoRegister when their package is loaded
+      // Pure runtime discovery - modules auto-register themselves
+      ModuleAutoRegister.initialize(_registry!);
 
-        // Auto-register providers if enabled (legacy support)
-        if (config.autoRegisterProviders) {
-          await _autoRegisterProviders(_registry!, config);
-        }
+      // Auto-register providers if enabled (legacy support)
+      if (config.autoRegisterProviders) {
+        await _autoRegisterProviders(_registry!, config);
+      }
 
-        // Call before register hook
-        config.onBeforeRegister?.call(_registry!);
+      // Call before register hook
+      config.onBeforeRegister?.call(_registry!);
 
-        // Register modules
-        if (config.autoDiscoverModules) {
-          print('ModularApp: Starting module registration...');
-          _registerModules(_registry!, config);
-        }
+      // Register modules
+      if (config.autoDiscoverModules) {
+        print('ModularApp: Starting module registration...');
+        _registerModules(_registry!, config);
+      }
 
-        // Register menus from all enabled modules
-        print('ModularApp: Registering menus...');
-        _registry!.menuRegistry.register();
-        _logModulesAndMenus(_registry!);
+      // Register menus from all enabled modules
+      print('ModularApp: Registering menus...');
+      _registry!.menuRegistry.register();
+      _logModulesAndMenus(_registry!);
 
-        // Call after register hook
-        config.onAfterRegister?.call(_registry!);
+      // Call after register hook
+      config.onAfterRegister?.call(_registry!);
 
-        // Boot modules
-        config.onBeforeBoot?.call(_registry!);
-        _registry!.boot();
-        config.onAfterBoot?.call(_registry!);
+      // Boot modules
+      config.onBeforeBoot?.call(_registry!);
+      _registry!.boot();
+      config.onAfterBoot?.call(_registry!);
 
-        // Build routes
-        if (config.autoBuildRoutes) {
-          try {
-            _routes = _buildRoutes(_registry!, config);
-            _logRoutesOnce();
-          } catch (e) {
-            print('Warning: Error building routes: $e');
-            _routes = {}; // Fallback to empty routes
-            _logRoutesOnce();
-          }
-        } else {
-          _routes = {};
+      // Build routes
+      if (config.autoBuildRoutes) {
+        try {
+          _routes = _buildRoutes(_registry!, config);
+          _logRoutesOnce();
+        } catch (e) {
+          print('Warning: Error building routes: $e');
+          _routes = {}; // Fallback to empty routes
           _logRoutesOnce();
         }
+      } else {
+        _routes = {};
+        _logRoutesOnce();
+      }
     } catch (e, stackTrace) {
       print('ERROR in ModularApp initialization: $e');
       print('Stack trace: $stackTrace');
