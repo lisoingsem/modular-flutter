@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.6] - 2025-01-19
+
+### Removed
+- **Git Submodule Support**: Completely removed git submodule functionality - use Melos for package management instead
+
+## [0.4.5] - 2025-01-19
+
+### Added
+- **Melos Integration**: Automatic detection of Melos workspaces - skips pubspec.yaml syncing when Melos is detected
+- **Zero-Import Module Discovery**: Modules are auto-discovered from `package_config.json` without needing imports in main.dart
+- **Full Auto-Discovery**: ModularApp automatically discovers all modules from packages/ directory via Melos + package_config.json
+
+### Changed
+- Build command now detects Melos and skips pubspec.yaml syncing (Melos handles it via usePubspecOverrides)
+- Module discovery now reads from `.dart_tool/package_config.json` (created by Melos/bootstrap)
+- Removed requirement for module imports in main.dart - fully automatic discovery
+
+### Removed
+- **Git Submodule Support**: Removed git submodule functionality - use Melos for package management instead
+
+### Improved
+- Better integration with Melos monorepo setup
+- Cleaner architecture: Melos handles package linking, modular_flutter handles runtime registration
+- Documentation updated with Melos integration guide
+
 ## [0.4.4] - 2025-01-19
 
 ### Fixed
