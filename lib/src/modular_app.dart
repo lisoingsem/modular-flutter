@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'module_registry.dart';
 import 'module_repository.dart';
 import 'module.dart';
@@ -137,8 +138,14 @@ class _ModularAppState extends State<ModularApp> {
     ModularAppConfig config,
   ) async {
     final modules = registry.repository.all();
+
+    // On web, skip provider loading from file system
+    if (kIsWeb) {
+      return;
+    }
+
     final loader = ProviderLoader(
-      projectRoot: Directory.current.path,
+      projectRoot: _getProjectRoot(),
       modulesPath: config.modulesPath ?? _autoDiscoverModulesPath(),
     );
 
@@ -236,7 +243,12 @@ class _ModularAppState extends State<ModularApp> {
   /// Works by discovering modules from packages/ directory and loading them via package names
   Future<void> _autoImportModules(String modulesPath) async {
     try {
-      final projectRoot = Directory.current.path;
+      // On web, skip file system operations
+      if (kIsWeb) {
+        return;
+      }
+
+      final projectRoot = _getProjectRoot();
 
       // Method 1: Try to load from generated modules.dart (if exists and imported)
       // This is optional - if the file exists and is imported, modules auto-register
@@ -262,6 +274,11 @@ class _ModularAppState extends State<ModularApp> {
   Future<void> _loadModulesFromPackages(
       String projectRoot, String modulesPath) async {
     try {
+      // On web, skip file system operations
+      if (kIsWeb) {
+        return;
+      }
+
       final packagesDir = Directory(path.join(projectRoot, modulesPath));
       if (!packagesDir.existsSync()) {
         return;
@@ -293,6 +310,11 @@ class _ModularAppState extends State<ModularApp> {
   /// Uses package name to dynamically reference the module
   Future<void> _loadModuleEntryPoint(Module module) async {
     try {
+      // On web, skip file system operations
+      if (kIsWeb) {
+        return;
+      }
+
       // Get package name from module path
       final modulePath = module.modulePath;
       final pubspecPath = path.join(modulePath, 'pubspec.yaml');
@@ -318,20 +340,44 @@ class _ModularAppState extends State<ModularApp> {
 
   /// Auto-discover modules path (packages/ or modules/)
   String _autoDiscoverModulesPath() {
-    final projectRoot = Directory.current.path;
-
-    // Check for packages/ directory first (most common)
-    if (Directory(path.join(projectRoot, 'packages')).existsSync()) {
+    // On web, default to packages (can't check file system)
+    if (kIsWeb) {
       return 'packages';
     }
 
-    // Check for modules/ directory
-    if (Directory(path.join(projectRoot, 'modules')).existsSync()) {
-      return 'modules';
+    try {
+      final projectRoot = _getProjectRoot();
+
+      // Check for packages/ directory first (most common)
+      if (Directory(path.join(projectRoot, 'packages')).existsSync()) {
+        return 'packages';
+      }
+
+      // Check for modules/ directory
+      if (Directory(path.join(projectRoot, 'modules')).existsSync()) {
+        return 'modules';
+      }
+    } catch (e) {
+      // Fallback if file system access fails
     }
 
     // Default to packages
     return 'packages';
+  }
+
+  /// Get project root - works on both web and native platforms
+  String _getProjectRoot() {
+    if (kIsWeb) {
+      // On web, we can't use Directory.current, so return a default
+      // The actual path resolution will be handled by package_config.json
+      return '';
+    }
+    try {
+      return Directory.current.path;
+    } catch (e) {
+      // Fallback if Directory.current fails
+      return '';
+    }
   }
 
   @override
@@ -346,8 +392,20 @@ class _ModularAppState extends State<ModularApp> {
           ),
         ),
         // Prevent route generation during initialization
+        // Set routes to empty to prevent Flutter from trying to generate routes
+        routes: const <String, WidgetBuilder>{},
         onGenerateRoute: (settings) {
           // Return loading screen for any route during initialization
+          return MaterialPageRoute(
+            builder: (context) => const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          );
+        },
+        onUnknownRoute: (settings) {
+          // Return loading screen for unknown routes during initialization
           return MaterialPageRoute(
             builder: (context) => const Scaffold(
               body: Center(
@@ -366,6 +424,7 @@ class _ModularAppState extends State<ModularApp> {
     }
 
     // Build MaterialApp with custom route handling
+    // Never set initialRoute - let onGenerateRoute handle everything
     return MaterialApp(
       title: widget.title ?? 'Flutter App',
       theme: widget.theme ??
@@ -377,8 +436,17 @@ class _ModularAppState extends State<ModularApp> {
       routes: const <String, WidgetBuilder>{},
       home: widget.home,
       navigatorObservers: widget.navigatorObservers ?? [],
-      onGenerateRoute: (settings) =>
-          _handleRouteGeneration(settings, routes, widget),
+      // Never set initialRoute - it causes null check errors
+      // Let onGenerateRoute handle the initial route
+      onGenerateRoute: (settings) {
+        // Ensure settings.name is never null
+        final routeName = settings.name ?? '/';
+        return _handleRouteGeneration(
+          RouteSettings(name: routeName, arguments: settings.arguments),
+          routes,
+          widget,
+        );
+      },
       onUnknownRoute: (settings) =>
           _buildNotFoundRoute(settings.name ?? 'unknown'),
     );
@@ -389,6 +457,7 @@ class _ModularAppState extends State<ModularApp> {
     Map<String, WidgetBuilder> routes,
     ModularApp widget,
   ) {
+    // Ensure settings.name is never null
     final requestedName = settings.name ?? '/';
 
     // Try exact match first
@@ -406,8 +475,9 @@ class _ModularAppState extends State<ModularApp> {
     }
 
     // If we have a '/' route registered, use it as a fallback for unknown names
-    if (routes.containsKey('/')) {
-      return _buildSafeRoute(settings, '/', routes['/']!);
+    final rootBuilder = routes['/'];
+    if (rootBuilder != null) {
+      return _buildSafeRoute(settings, '/', rootBuilder);
     }
 
     // Final fallback - show not found

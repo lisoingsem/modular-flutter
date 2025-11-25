@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:path/path.dart' as path;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:yaml/yaml.dart';
 import 'module.dart';
 import 'activator.dart';
@@ -16,8 +17,15 @@ class PackageDiscovery {
     Activator? activator,
     String? localModulesPath,
   }) async {
-    final root = projectRoot ?? Directory.current.path;
+    final root = projectRoot ?? _getProjectRoot();
     final discoveredModules = <Module>[];
+
+    // On web, only discover from package_config.json (no file system access)
+    if (kIsWeb) {
+      final packageModules = await _discoverFromPackages(root, activator);
+      discoveredModules.addAll(packageModules);
+      return discoveredModules;
+    }
 
     // 1. Discover from custom local modules path (if specified)
     if (localModulesPath != null) {
@@ -44,16 +52,36 @@ class PackageDiscovery {
       discoveredModules.addAll(modulesModules);
     }
 
-      // 4. Discover from installed package dependencies
-      final packageModules = await _discoverFromPackages(root, activator);
-      discoveredModules.addAll(packageModules);
+    // 4. Discover from installed package dependencies
+    final packageModules = await _discoverFromPackages(root, activator);
+    discoveredModules.addAll(packageModules);
 
     return discoveredModules;
+  }
+
+  /// Get project root - works on both web and native platforms
+  static String _getProjectRoot() {
+    if (kIsWeb) {
+      // On web, we can't use Directory.current, so return a default
+      // The actual path resolution will be handled by package_config.json
+      return '';
+    }
+    try {
+      return Directory.current.path;
+    } catch (e) {
+      // Fallback if Directory.current fails
+      return '';
+    }
   }
 
   /// Discover modules from a directory
   static List<Module> _discoverFromDirectory(
       String modulesPath, Activator? activator) {
+    // On web, skip file system operations
+    if (kIsWeb) {
+      return [];
+    }
+
     final modulesDir = Directory(modulesPath);
     if (!modulesDir.existsSync()) {
       return [];
@@ -84,12 +112,19 @@ class PackageDiscovery {
       String projectRoot, Activator? activator) async {
     final modules = <Module>[];
 
-    // Try to read package_config.json (Dart 2.17+)
-    final packageConfigPath = path.join(
-      projectRoot,
-      '.dart_tool',
-      'package_config.json',
-    );
+    // On web, try to use a relative path or skip if projectRoot is empty
+    String packageConfigPath;
+    if (kIsWeb && (projectRoot.isEmpty || projectRoot == '')) {
+      // On web, try relative path from where the app is running
+      packageConfigPath = '.dart_tool/package_config.json';
+    } else {
+      packageConfigPath = path.join(
+        projectRoot,
+        '.dart_tool',
+        'package_config.json',
+      );
+    }
+
     final packageConfigFile = File(packageConfigPath);
 
     if (packageConfigFile.existsSync()) {

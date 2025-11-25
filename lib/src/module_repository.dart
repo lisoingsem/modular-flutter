@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:path/path.dart' as path;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'module.dart';
 import 'activator.dart';
 import 'module_filter.dart';
@@ -19,11 +20,26 @@ class ModuleRepository {
     Activator? activator,
     this.autoDiscoverPackages = true,
     this.localModulesPath,
-  })  : modulesPath =
-            modulesPath ?? path.join(Directory.current.path, 'modules'),
+  })  : modulesPath = modulesPath ??
+            (kIsWeb ? 'modules' : path.join(_getProjectRoot(), 'modules')),
         activator = activator ?? FileActivator() {
     // Load module statuses from activator
     _syncActivatorStatuses();
+  }
+
+  /// Get project root - works on both web and native platforms
+  static String _getProjectRoot() {
+    if (kIsWeb) {
+      // On web, we can't use Directory.current, so return a default
+      // The actual path resolution will be handled by package_config.json
+      return '';
+    }
+    try {
+      return Directory.current.path;
+    } catch (e) {
+      // Fallback if Directory.current fails
+      return '';
+    }
   }
 
   /// Sync module enabled status with activator
@@ -51,7 +67,7 @@ class ModuleRepository {
     // Discover modules from all sources
     final discoveredModules = autoDiscoverPackages
         ? await PackageDiscovery.discoverFromPackages(
-            projectRoot: Directory.current.path,
+            projectRoot: _getProjectRoot(),
             activator: activator,
             localModulesPath: localModulesPath)
         : _scanLocalModules();
@@ -81,6 +97,11 @@ class ModuleRepository {
 
   /// Scan only local modules directory (legacy method)
   List<Module> _scanLocalModules() {
+    // On web, skip file system operations
+    if (kIsWeb) {
+      return [];
+    }
+
     final modulesDir = Directory(modulesPath);
 
     if (!modulesDir.existsSync()) {
