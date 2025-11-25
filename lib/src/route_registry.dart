@@ -43,12 +43,21 @@ class RouteRegistry {
   final Map<String, WidgetBuilder> _builders = {}; // Direct route builders
 
   /// Register a route with a WidgetBuilder (Laravel-style)
+  /// Last registered route wins - later registrations override earlier ones
   /// This is the preferred method - modules call this in their providers
   void register(String path, WidgetBuilder builder, {String? name}) {
+    // Last registration wins - override any existing route with same path
     _builders[path] = builder;
     if (name != null) {
-      _builders[name] = builder;
+      _builders[name] = builder; // Named routes also override
     }
+  }
+  
+  /// Register multiple routes at once (Laravel-style)
+  /// Last registered routes override earlier ones with same paths
+  void registerRoutes(Map<String, WidgetBuilder> routes) {
+    // Add all routes - later entries in the map override earlier ones
+    _builders.addAll(routes);
   }
 
   /// Register routes from a module (from module.yaml)

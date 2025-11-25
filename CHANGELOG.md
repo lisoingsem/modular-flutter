@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.2] - 2025-01-19
+
+### Fixed
+- Fixed MaterialApp home/routes conflict - properly handles routes with '/' path
+- Fixed route merge logic - last registered route now correctly overrides earlier ones
+- Improved route priority: module routes → additional routes → hook routes (last wins)
+
+### Improved
+- Better route override behavior - Laravel-style last registration wins
+- Cleaner MaterialApp construction logic
+
 ## [0.4.1] - 2025-01-19
 
 ### Fixed

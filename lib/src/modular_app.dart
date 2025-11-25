@@ -176,15 +176,16 @@ class _ModularAppState extends State<ModularApp> {
     final resolver = RouteResolver();
     var routes = resolver.buildRoutesFromRegistry(registry.routeRegistry);
 
-    // Merge additional routes
+    // Merge additional routes (last order wins - additionalRoutes override module routes)
     if (widget.additionalRoutes != null) {
       routes = {
-        ...routes,
-        ...widget.additionalRoutes!,
+        ...routes, // Module routes first
+        ...widget.additionalRoutes!, // Additional routes override module routes
       };
     }
 
-    // Call route built hook
+    // Call route built hook (last order - can override everything)
+    // The hook receives all routes and returns the final routes map
     if (config.onRouteBuilt != null) {
       routes = config.onRouteBuilt!(routes);
     }
@@ -224,6 +225,46 @@ class _ModularAppState extends State<ModularApp> {
       );
     }
 
+    final routes = _routes ?? {};
+
+    // MaterialApp doesn't allow both 'home' and 'routes' when routes contains '/'
+    // If routes contains '/', we must use routes and cannot use home
+    final hasHomeRoute = routes.containsKey('/');
+    final hasRoutes = routes.isNotEmpty;
+
+    // Build MaterialApp - last registered route wins (Laravel-style)
+    // If routes contains '/', we cannot use home - use routes only
+    if (hasHomeRoute) {
+      return MaterialApp(
+        title: widget.title ?? 'Flutter App',
+        theme: widget.theme ??
+            ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+              useMaterial3: true,
+            ),
+        routes: routes,
+        initialRoute: widget.initialRoute,
+        navigatorObservers: widget.navigatorObservers ?? [],
+      );
+    }
+
+    // If we have routes but no '/', we can use both
+    if (hasRoutes) {
+      return MaterialApp(
+        title: widget.title ?? 'Flutter App',
+        theme: widget.theme ??
+            ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+              useMaterial3: true,
+            ),
+        routes: routes,
+        initialRoute: widget.initialRoute,
+        home: widget.home,
+        navigatorObservers: widget.navigatorObservers ?? [],
+      );
+    }
+
+    // No routes - use home if provided
     return MaterialApp(
       title: widget.title ?? 'Flutter App',
       theme: widget.theme ??
@@ -231,7 +272,6 @@ class _ModularAppState extends State<ModularApp> {
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             useMaterial3: true,
           ),
-      routes: _routes ?? {},
       initialRoute: widget.initialRoute,
       home: widget.home,
       navigatorObservers: widget.navigatorObservers ?? [],
