@@ -397,22 +397,41 @@ class _ModularAppState extends State<ModularApp> {
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             useMaterial3: true,
           ),
-      routes: routes,
+      routes: routes.isEmpty ? null : routes,
       initialRoute: widget.initialRoute,
-      home: widget.home,
+      home: routes.isEmpty
+          ? (widget.home ??
+              const Scaffold(body: Center(child: Text('No routes configured'))))
+          : null,
       navigatorObservers: widget.navigatorObservers ?? [],
-      onGenerateRoute: (settings) {
-        // Safely get route builder
-        final routeBuilder = routes[settings.name];
-        if (routeBuilder != null) {
-          return MaterialPageRoute(
-            builder: routeBuilder,
-            settings: settings,
-          );
-        }
-        // Return null to use onUnknownRoute
-        return null;
-      },
+      onGenerateRoute: routes.isEmpty
+          ? null
+          : (settings) {
+              // Safely get route builder
+              try {
+                final routeBuilder = routes[settings.name];
+                if (routeBuilder != null) {
+                  return MaterialPageRoute(
+                    builder: (context) {
+                      try {
+                        return routeBuilder(context);
+                      } catch (e) {
+                        print('Error building route "${settings.name}": $e');
+                        return Scaffold(
+                          appBar: AppBar(title: const Text('Error')),
+                          body: Center(child: Text('Error loading route: $e')),
+                        );
+                      }
+                    },
+                    settings: settings,
+                  );
+                }
+              } catch (e) {
+                print('Error generating route "${settings.name}": $e');
+              }
+              // Return null to use onUnknownRoute
+              return null;
+            },
       onUnknownRoute: (settings) {
         // Fallback for unknown routes
         return MaterialPageRoute(
