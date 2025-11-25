@@ -397,11 +397,13 @@ class _ModularAppState extends State<ModularApp> {
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             useMaterial3: true,
           ),
-      routes: routes,
-      initialRoute:
-          widget.initialRoute != null && routes.containsKey(widget.initialRoute)
-              ? widget.initialRoute
-              : null,
+      // Only set routes if we have valid routes, otherwise use home
+      routes: routes.isNotEmpty ? routes : null,
+      initialRoute: routes.isNotEmpty &&
+              widget.initialRoute != null &&
+              routes.containsKey(widget.initialRoute)
+          ? widget.initialRoute
+          : null,
       home: routes.isEmpty ||
               (widget.initialRoute != null &&
                   !routes.containsKey(widget.initialRoute))
