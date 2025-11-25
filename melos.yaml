@@ -1,0 +1,31 @@
+name: modular_flutter
+
+repository: https://github.com/lisoingsem/modular-flutter
+
+# This package is a standalone package, not a monorepo
+# But it can be used in Melos monorepos
+packages:
+  - "."
+
+command:
+  bootstrap:
+    runPubGetInParallel: true
+    usePubspecOverrides: true
+
+  clean:
+    scope: "*"
+
+  list:
+    scope: "*"
+
+  exec:
+    scope: "*"
+    concurrency: 5
+
+# Ignore patterns
+ignore:
+  - "**/*.g.dart"
+  - "**/*.freezed.dart"
+  - "**/build/**"
+  - "**/.dart_tool/**"
+

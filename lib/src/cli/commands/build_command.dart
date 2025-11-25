@@ -14,6 +14,9 @@ class BuildCommand implements Command {
       // Check if we're in a Flutter project
       final pubspecPath = path.join(projectRoot, 'pubspec.yaml');
 
+      // Detect if Melos workspace (Melos handles package discovery/linking)
+      final isMelosWorkspace = _isMelosWorkspace(projectRoot);
+
       // Detect modules path
       String? modulesPath;
       if (Directory(path.join(projectRoot, 'packages')).existsSync()) {
@@ -28,23 +31,30 @@ class BuildCommand implements Command {
 
       if (File(modulesConfigPath).existsSync()) {
         // Read modules.yaml and sync everything automatically
-        // 1. Sync modules to pubspec.yaml (dependencies)
-        await _syncModulesFromConfig(
-            modulesConfigPath, pubspecPath, projectRoot);
-        print('✓ Synced modules from modules.yaml to pubspec.yaml');
+        // 1. Sync modules to pubspec.yaml (dependencies) - skip if Melos detected
+        if (!isMelosWorkspace) {
+          await _syncModulesFromConfig(
+              modulesConfigPath, pubspecPath, projectRoot);
+          print('✓ Synced modules from modules.yaml to pubspec.yaml');
+        } else {
+          print(
+              '✓ Melos workspace detected - skipping pubspec.yaml sync (Melos handles it)');
+        }
 
         // 2. Generate module imports (auto-registration) - only enabled modules
         if (modulesPath != null) {
-          await _generateModulesImport(
-              projectRoot, modulesPath, modulesConfigPath);
+          await _generateModulesImport(projectRoot, modulesPath,
+              modulesConfigPath);
         }
       } else if (modulesPath != null) {
         // Auto-discover modules and create config file
         await _autoDiscoverAndCreateConfig(
             projectRoot, modulesPath, modulesConfigPath);
-        // Sync modules to pubspec.yaml
-        await _syncModulesFromConfig(
-            modulesConfigPath, pubspecPath, projectRoot);
+        // Sync modules to pubspec.yaml - skip if Melos detected
+        if (!isMelosWorkspace) {
+          await _syncModulesFromConfig(
+              modulesConfigPath, pubspecPath, projectRoot);
+        }
         // Generate module imports (only enabled modules)
         await _generateModulesImport(
             projectRoot, modulesPath, modulesConfigPath);
@@ -58,17 +68,31 @@ class BuildCommand implements Command {
       print('');
       print('Module management enabled!');
       print('');
+      if (isMelosWorkspace) {
+        print('Melos workspace detected:');
+        print('  - Melos handles package discovery and linking');
+        print('  - modular_flutter handles runtime module registration');
+        print('');
+      }
       print('How it works:');
       print(
           '  1. Edit modules.yaml to enable/disable modules (auth: true/false)');
-      print('  2. Build command auto-syncs to pubspec.yaml');
+      if (!isMelosWorkspace) {
+        print('  2. Build command auto-syncs to pubspec.yaml');
+      } else {
+        print('  2. Melos handles package linking (usePubspecOverrides: true)');
+      }
       print('  3. Module imports are auto-generated (only enabled modules)');
       print('  4. Routes are auto-registered at runtime');
       print('');
       print('Workflow:');
       print('  1. Edit modules.yaml (enable/disable: auth: true)');
       print('  2. Run: dart run modular_flutter build');
-      print('  3. Run: flutter pub get');
+      if (isMelosWorkspace) {
+        print('  3. Run: melos bootstrap (or already done)');
+      } else {
+        print('  3. Run: flutter pub get');
+      }
       print('  4. Run: flutter run');
 
       return 0;
@@ -245,7 +269,9 @@ class BuildCommand implements Command {
   Future<void> _autoDiscoverAndCreateConfig(
       String projectRoot, String modulesPath, String configPath) async {
     try {
-      final repository = ModuleRepository(localModulesPath: modulesPath);
+      final repository = ModuleRepository(
+        localModulesPath: modulesPath,
+      );
       final modules = repository.scan();
 
       if (modules.isEmpty) {
@@ -304,8 +330,8 @@ class BuildCommand implements Command {
   /// Generate modules import file (auto-discovery)
   /// This file imports all enabled modules from modules.yaml so they can auto-register
   /// ModularApp automatically imports this file - no manual imports needed
-  Future<void> _generateModulesImport(
-      String projectRoot, String modulesPath, String? modulesConfigPath) async {
+  Future<void> _generateModulesImport(String projectRoot, String modulesPath,
+      String? modulesConfigPath) async {
     try {
       // Read enabled modules from modules.yaml (only enabled modules)
       final enabledModules = <String>{}; // module aliases
@@ -327,7 +353,9 @@ class BuildCommand implements Command {
         }
       } else {
         // Fallback: discover from filesystem
-        final repository = ModuleRepository(localModulesPath: modulesPath);
+        final repository = ModuleRepository(
+          localModulesPath: modulesPath,
+        );
         final modules = repository.scan();
         for (final module in modules) {
           if (module.enabled) {
@@ -344,8 +372,10 @@ class BuildCommand implements Command {
       final moduleImports = <String, String>{}; // packageName -> moduleFile
 
       for (final moduleAlias in enabledModules) {
+        // Try regular path
         final modulePath = path.join(projectRoot, modulesPath, moduleAlias);
         final modulePubspecPath = path.join(modulePath, 'pubspec.yaml');
+
         if (!File(modulePubspecPath).existsSync()) continue;
 
         final pubspecContent = await File(modulePubspecPath).readAsString();
@@ -422,10 +452,15 @@ class BuildCommand implements Command {
       print(
           '✓ Generated modules import file with ${moduleImports.length} modules');
 
-      // Auto-update main.dart to import the generated file (fully automatic)
-
-      // Modules are auto-imported - you never touch this file!
-      await _autoImportModulesInMain(projectRoot, modulesFile);
+      // Note: The import in main.dart is OPTIONAL
+      // ModularApp will auto-discover modules even without this import
+      // But including it ensures modules are loaded early and auto-register
+      // Try to auto-update main.dart (optional - won't fail if it doesn't work)
+      try {
+        await _autoImportModulesInMain(projectRoot, modulesFile);
+      } catch (e) {
+        // Silently fail - modules will still work via auto-discovery
+      }
     } catch (e) {
       print('Warning: Could not generate modules import: $e');
     }
@@ -488,5 +523,12 @@ class BuildCommand implements Command {
     } catch (e) {
       print('Warning: Could not auto-update main.dart: $e');
     }
+  }
+
+  /// Check if project is using Melos workspace
+  /// Melos handles package discovery and linking (like composer merge-plugin)
+  bool _isMelosWorkspace(String projectRoot) {
+    final melosYamlPath = path.join(projectRoot, 'melos.yaml');
+    return File(melosYamlPath).existsSync();
   }
 }

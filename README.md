@@ -15,7 +15,7 @@ A powerful Flutter package for managing modular architecture. Organize your Flut
 - **Route Registration**: Register routes from modules automatically
 - **Optional Dependency**: Modules can work without `modular_flutter` as a direct dependency
 - **Module Management**: Enable/disable modules dynamically with JSON configuration
-- **Git Submodules**: Support for managing modules as git submodules
+- **Melos Integration**: Works seamlessly with Melos for package discovery and linking
 
 ## Quick Start
 
@@ -70,6 +70,44 @@ void main() {
 
 **No manual setup needed!** All modules are discovered, registered, and booted automatically.
 
+## Melos Integration (Recommended for Monorepos)
+
+If you're using **Melos** for package management (like composer merge-plugin in Laravel), `modular_flutter` automatically detects it and works together:
+
+- **Melos**: Handles package discovery and linking (via `usePubspecOverrides: true`)
+- **modular_flutter**: Handles runtime module registration, routes, menus
+
+### Setup with Melos
+
+1. Install Melos:
+```bash
+dart pub global activate melos
+```
+
+2. Create `melos.yaml`:
+```yaml
+name: my_monorepo
+packages:
+  - "packages/**"
+  - "."
+
+command:
+  bootstrap:
+    runPubGetInParallel: true
+    usePubspecOverrides: true
+```
+
+3. Run:
+```bash
+melos bootstrap
+dart run modular_flutter build
+```
+
+When Melos is detected, `modular_flutter build` will:
+- ✅ Skip `pubspec.yaml` syncing (Melos handles it)
+- ✅ Still generate `modules.dart` for auto-registration
+- ✅ Still respect `modules.yaml` enable/disable flags
+
 ## Why pubspec.yaml?
 
 **Flutter requires all dependencies to be declared in `pubspec.yaml`** - this is a Flutter/Dart package system requirement. There's no way around it.
@@ -78,6 +116,8 @@ However, **you never need to edit it manually!** The `build` command automatical
 - Scans `packages/` directory
 - Reads each module's `pubspec.yaml`
 - Auto-adds them to your main `pubspec.yaml`
+
+**Or use Melos** - it handles package linking automatically!
 
 Just run `dart run modular_flutter build` whenever you add a new module.
 
@@ -113,6 +153,47 @@ git add pubspec.yaml lib/app/modules.dart
 
 Configure your IDE to run `dart run modular_flutter build` before running the app.
 
+## Architecture
+
+### Core App vs Modules
+
+**core_app** (the only real app) contains:
+- Navigation
+- Theme
+- Dependency injection
+- Main screens
+- App config
+
+**packages/module_xxx** contain:
+- Features
+- Business logic
+- Widgets
+- Domain/entities
+- Services
+- API logic
+
+### Benefits
+
+1. **One app → simple deployment**
+   - No need for multiple apps unless you actually need different apps
+   - Single deployment target
+
+2. **Modules reusable**
+   - Like Laravel modules → portable, easy to update
+   - Can be shared across projects
+   - Can be versioned independently
+
+3. **Codebase clean & scalable**
+   - Modules can be:
+     - Shared
+     - Versioned
+     - Moved to private GitHub
+     - Imported in multiple apps in future (if needed)
+
+4. **Melos auto-discovers all modules**
+   - Only core_app runs
+   - All modules automatically discovered and linked
+
 ## Module Structure
 
 ```
@@ -125,7 +206,7 @@ packages/
         login_screen.dart
     lang/
       en.json
-      es.yaml
+    es.yaml
     module.yaml
     pubspec.yaml
 ```
@@ -234,5 +315,4 @@ dart run modular_flutter list
 
 ## Documentation
 
-- [Git Submodules Guide](GIT_SUBMODULES.md)
 - [Full Documentation](DOCS.md)

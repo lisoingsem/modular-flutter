@@ -55,6 +55,28 @@ By default, `modular_flutter` discovers modules from:
 2. `modules/` directory (fallback)
 3. Installed package dependencies (from pub.dev, git, or path)
 
+### Melos Integration
+
+If you're using **Melos** for package management, `modular_flutter` automatically detects it:
+
+```yaml
+# melos.yaml
+name: my_monorepo
+packages:
+  - "packages/**"
+  - "."
+
+command:
+  bootstrap:
+    usePubspecOverrides: true
+```
+
+When `melos.yaml` is detected:
+- `modular_flutter build` skips `pubspec.yaml` syncing (Melos handles it)
+- Still generates `modules.dart` for auto-registration
+- Works seamlessly together
+
+
 You can customize the local modules path:
 
 ```dart
