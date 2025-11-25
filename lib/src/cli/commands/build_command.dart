@@ -43,8 +43,8 @@ class BuildCommand implements Command {
 
         // 2. Generate module imports (auto-registration) - only enabled modules
         if (modulesPath != null) {
-          await _generateModulesImport(projectRoot, modulesPath,
-              modulesConfigPath);
+          await _generateModulesImport(
+              projectRoot, modulesPath, modulesConfigPath);
         }
       } else if (modulesPath != null) {
         // Auto-discover modules and create config file
@@ -330,8 +330,8 @@ class BuildCommand implements Command {
   /// Generate modules import file (auto-discovery)
   /// This file imports all enabled modules from modules.yaml so they can auto-register
   /// ModularApp automatically imports this file - no manual imports needed
-  Future<void> _generateModulesImport(String projectRoot, String modulesPath,
-      String? modulesConfigPath) async {
+  Future<void> _generateModulesImport(
+      String projectRoot, String modulesPath, String? modulesConfigPath) async {
     try {
       // Read enabled modules from modules.yaml (only enabled modules)
       final enabledModules = <String>{}; // module aliases
