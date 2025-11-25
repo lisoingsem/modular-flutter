@@ -461,14 +461,11 @@ class _ModularAppState extends State<ModularApp> {
           onGenerateRoute: (settings) {
             final routeName = settings.name ?? '/';
             try {
-              _debugLog('ModularApp generating route "$routeName"');
               final route = _handleRouteGeneration(
                 RouteSettings(name: routeName, arguments: settings.arguments),
                 routes,
                 widget,
               );
-              _debugLog(
-                  'ModularApp generated route "$routeName" -> ${route.runtimeType}');
               return route;
             } catch (e, stackTrace) {
               _debugLog('Error generating route "$routeName": $e');
