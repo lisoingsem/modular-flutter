@@ -3,11 +3,11 @@ import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
 import 'module.dart';
 
-/// Configuration loader for modules (similar to Laravel config)
+/// Configuration loader for modules
 /// Supports customization via app's config directory
 class ConfigLoader {
   /// Load configuration from a module's config directory
-  /// Checks for app overrides first (like Laravel's published config)
+  /// Checks for app overrides first (allows app-level customization)
   static Map<String, dynamic> loadConfig(Module module, String configName) {
     // First, try to load from app's config directory (customization)
     final appConfigPath = path.join(
@@ -107,7 +107,7 @@ class ConfigLoader {
   }
 }
 
-/// Module configuration manager (similar to Laravel's config() helper)
+/// Module configuration manager
 class ModuleConfig {
   final Module module;
   final Map<String, Map<String, dynamic>> _cache = {};

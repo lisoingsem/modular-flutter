@@ -6,7 +6,7 @@ import 'module.dart';
 import 'activator.dart';
 
 /// Discovers modules from installed packages (pub.dev, git, path)
-/// Similar to Laravel's merge-plugin auto-discovery
+/// Auto-discovery for package dependencies
 class PackageDiscovery {
   /// Discover modules from all installed packages
   ///

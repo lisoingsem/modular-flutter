@@ -11,7 +11,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 
 /// Self-contained app wrapper - handles all discovery, registration, and routing internally
-/// Like Laravel Modules - zero configuration needed, but fully customizable
+/// Zero configuration needed, but fully customizable
 class ModularApp extends StatefulWidget {
   final String? title;
   final ThemeData? theme;
@@ -32,7 +32,7 @@ class ModularApp extends StatefulWidget {
     this.config,
   });
 
-  /// Get the registry (like Laravel's Module facade)
+  /// Get the registry (similar to a module facade pattern)
   /// Only available after the app is built
   static ModuleRegistry? get registry => _registry;
 
@@ -67,7 +67,7 @@ class _ModularAppState extends State<ModularApp> {
     final config = widget.config ?? ModularAppConfig.defaults();
     final modulesPath = config.modulesPath ?? _autoDiscoverModulesPath();
 
-    // Laravel-style auto-discovery: Auto-import modules at runtime
+    // Auto-discovery: Auto-import modules at runtime
     // This loads modules automatically without needing imports in main.dart
     await _autoImportModules(modulesPath);
 
@@ -79,9 +79,9 @@ class _ModularAppState extends State<ModularApp> {
     // Set static registry for access
     ModularApp._registry = _registry;
 
-    // Initialize auto-registered providers (Laravel-style - no code generation!)
+    // Initialize auto-registered providers (no code generation needed)
     // Modules register themselves via ModuleAutoRegister when their package is loaded
-    // This works like Laravel's auto-discovery - pure runtime discovery
+    // Pure runtime discovery - modules auto-register themselves
     ModuleAutoRegister.initialize(_registry!);
 
     // Auto-register providers if enabled (legacy support)
@@ -191,7 +191,7 @@ class _ModularAppState extends State<ModularApp> {
 
     // Call route built hook (LAST ORDER - highest priority, can override everything)
     // The hook receives all routes and returns the final routes map
-    // Routes returned from hook override all previous routes (Laravel-style: last wins)
+    // Routes returned from hook override all previous routes (last registered wins)
     if (config.onRouteBuilt != null) {
       final hookResult = config.onRouteBuilt!(routes);
       // Hook result overrides everything (last order wins)
@@ -204,7 +204,7 @@ class _ModularAppState extends State<ModularApp> {
     return routes;
   }
 
-  /// Auto-import modules at runtime (Laravel-style)
+  /// Auto-import modules at runtime
   /// This loads the generated modules.dart file automatically
   /// No manual imports needed in main.dart - works across all projects!
   Future<void> _autoImportModules(String modulesPath) async {
@@ -216,7 +216,7 @@ class _ModularAppState extends State<ModularApp> {
       if (modulesFile.existsSync()) {
         // File exists - it will be imported automatically by the build system
         // The import is added to main.dart by the build command
-        // This is like Laravel's autoloading - completely automatic
+        // Completely automatic - no manual configuration needed
       } else {
         // File doesn't exist yet - user needs to run build command
         // This is fine - modules can still work if manually imported
@@ -265,7 +265,7 @@ class _ModularAppState extends State<ModularApp> {
     final hasHomeRoute = routes.containsKey('/');
     final hasRoutes = routes.isNotEmpty;
 
-    // Build MaterialApp - last registered route wins (Laravel-style)
+    // Build MaterialApp - last registered route wins
     // If routes contains '/', we cannot use home - use routes only
     if (hasHomeRoute) {
       return MaterialApp(
@@ -278,6 +278,17 @@ class _ModularAppState extends State<ModularApp> {
         routes: routes,
         initialRoute: widget.initialRoute,
         navigatorObservers: widget.navigatorObservers ?? [],
+        onUnknownRoute: (settings) {
+          // Fallback for unknown routes
+          return MaterialPageRoute(
+            builder: (context) => Scaffold(
+              appBar: AppBar(title: const Text('Not Found')),
+              body: Center(
+                child: Text('Route "${settings.name}" not found'),
+              ),
+            ),
+          );
+        },
       );
     }
 
@@ -294,10 +305,21 @@ class _ModularAppState extends State<ModularApp> {
         initialRoute: widget.initialRoute,
         home: widget.home,
         navigatorObservers: widget.navigatorObservers ?? [],
+        onUnknownRoute: (settings) {
+          // Fallback for unknown routes
+          return MaterialPageRoute(
+            builder: (context) => Scaffold(
+              appBar: AppBar(title: const Text('Not Found')),
+              body: Center(
+                child: Text('Route "${settings.name}" not found'),
+              ),
+            ),
+          );
+        },
       );
     }
 
-    // No routes - use home if provided
+    // No routes - use home if provided, or show error
     return MaterialApp(
       title: widget.title ?? 'Flutter App',
       theme: widget.theme ??
@@ -306,8 +328,25 @@ class _ModularAppState extends State<ModularApp> {
             useMaterial3: true,
           ),
       initialRoute: widget.initialRoute,
-      home: widget.home,
+      home: widget.home ??
+          const Scaffold(
+            body: Center(
+              child: Text(
+                  'No routes configured. Please add routes or set home widget.'),
+            ),
+          ),
       navigatorObservers: widget.navigatorObservers ?? [],
+      onUnknownRoute: (settings) {
+        // Fallback for unknown routes
+        return MaterialPageRoute(
+          builder: (context) => Scaffold(
+            appBar: AppBar(title: const Text('Not Found')),
+            body: Center(
+              child: Text('Route "${settings.name}" not found'),
+            ),
+          ),
+        );
+      },
     );
   }
 }

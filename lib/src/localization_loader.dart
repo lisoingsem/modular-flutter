@@ -4,7 +4,7 @@ import 'module.dart';
 import 'module_repository.dart';
 
 /// Loader for module localizations
-/// Similar to Laravel's translation namespace system
+/// Translation namespace system for modules
 class LocalizationLoader {
   /// Get all localization files from enabled modules
   static Map<String, List<String>> getAllModuleLocalizations(
@@ -189,7 +189,7 @@ class LocalizationLoader {
     return localizations;
   }
 
-  /// Get localization namespace for a module (similar to Laravel's module::key)
+  /// Get localization namespace for a module (format: module::key)
   /// Returns the module's namespace prefix
   static String getModuleNamespace(Module module) {
     return module.lowerName;

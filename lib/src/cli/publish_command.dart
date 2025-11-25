@@ -4,7 +4,7 @@ import '../../modular_flutter.dart';
 import 'command.dart';
 
 /// Command to publish module assets/config to the application
-/// Similar to Laravel's `module:publish`
+/// Module asset publishing command
 class PublishCommand implements Command {
   @override
   Future<int> run(List<String> arguments) async {

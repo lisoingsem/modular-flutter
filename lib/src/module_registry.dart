@@ -90,7 +90,7 @@ class ModuleRegistry {
   }
 
   /// Register a single module
-  /// Laravel-style: Routes registered ONLY via ModuleProvider.registerRoutes()
+  /// Routes registered ONLY via ModuleProvider.registerRoutes()
   /// NO module imports needed in core app - providers auto-discover from module.yaml
   void registerModule(Module module) {
     // Register service providers from module.yaml
@@ -117,7 +117,7 @@ class ModuleRegistry {
             }
             _providers.add(provider);
 
-            // Register routes from provider (Laravel-style - ONLY way to register routes)
+            // Register routes from provider (ONLY way to register routes)
             // Routes MUST be registered in ModuleProvider.registerRoutes() method
             if (provider is ModuleProvider) {
               try {
@@ -136,7 +136,7 @@ class ModuleRegistry {
     }
 
     // Note: Routes from module.yaml are NOT used
-    // Routes MUST be registered via ModuleProvider.registerRoutes() (Laravel-style)
+    // Routes MUST be registered via ModuleProvider.registerRoutes()
 
     // Register menus (from module.yaml)
     if (module.menus.isNotEmpty) {

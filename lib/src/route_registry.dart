@@ -7,7 +7,7 @@ class ModuleRoute {
   final String widget;
   final String? name;
   final Map<String, dynamic>? parameters;
-  final WidgetBuilder? builder; // Runtime builder (Laravel-style)
+  final WidgetBuilder? builder; // Runtime builder
 
   ModuleRoute({
     required this.path,
@@ -37,12 +37,12 @@ class ModuleRoute {
 }
 
 /// Registry for managing routes from modules
-/// Laravel-style: routes registered at runtime through providers
+/// Routes registered at runtime through providers
 class RouteRegistry {
   final Map<String, ModuleRoute> _routes = {};
   final Map<String, WidgetBuilder> _builders = {}; // Direct route builders
 
-  /// Register a route with a WidgetBuilder (Laravel-style)
+  /// Register a route with a WidgetBuilder
   /// Last registered route wins - later registrations override earlier ones
   /// This is the preferred method - modules call this in their providers
   void register(String path, WidgetBuilder builder, {String? name}) {
@@ -53,7 +53,7 @@ class RouteRegistry {
     }
   }
   
-  /// Register multiple routes at once (Laravel-style)
+  /// Register multiple routes at once
   /// Last registered routes override earlier ones with same paths
   void registerRoutes(Map<String, WidgetBuilder> routes) {
     // Add all routes - later entries in the map override earlier ones
@@ -75,12 +75,12 @@ class RouteRegistry {
     return _routes.values.toList();
   }
 
-  /// Get all route builders (Laravel-style runtime routes)
+  /// Get all route builders (runtime routes)
   Map<String, WidgetBuilder> getAllBuilders() {
     return Map.unmodifiable(_builders);
   }
 
-  /// Get a route builder by path (Laravel-style)
+  /// Get a route builder by path
   WidgetBuilder? getBuilder(String path) {
     return _builders[path];
   }

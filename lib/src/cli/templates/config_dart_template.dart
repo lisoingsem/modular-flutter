@@ -1,8 +1,8 @@
 /// Module configuration file
-/// Similar to Laravel's config() helper
+/// Configuration helper
 library;
 
-/// Get config value (similar to config('key') in Laravel)
+/// Get config value
 /// Usage: Config.get('api_url')
 class Config {
   static Map<String, dynamic>? _config;

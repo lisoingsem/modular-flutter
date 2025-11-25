@@ -7,7 +7,7 @@ import 'localization_registry.dart';
 import 'route_registry.dart';
 
 /// Base class for module service providers
-/// Similar to Laravel's service providers
+/// Handles module initialization, route registration, and service bootstrapping
 abstract class ModuleProvider {
   /// The module this provider belongs to
   final Module module;
@@ -26,7 +26,6 @@ abstract class ModuleProvider {
   void register() {}
 
   /// Register routes for this module
-  /// Similar to Laravel's RouteServiceProvider::map()
   /// Override this method to register routes programmatically
   ///
   /// Example:
@@ -49,7 +48,6 @@ abstract class ModuleProvider {
   void onDisabled() {}
 
   /// Load localizations from a directory path
-  /// Similar to Laravel's loadTranslationsFrom()
   ///
   /// Example:
   /// ```dart
@@ -77,7 +75,6 @@ abstract class ModuleProvider {
   }
 
   /// Register localizations directly (programmatically)
-  /// Similar to Laravel's translation registration
   ///
   /// Example:
   /// ```dart

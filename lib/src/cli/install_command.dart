@@ -3,7 +3,7 @@ import 'package:path/path.dart' as path;
 import 'command.dart';
 
 /// Command to install a module from pub.dev or git
-/// Similar to Laravel's module installation
+/// Module installation command
 class InstallCommand implements Command {
   @override
   Future<int> run(List<String> arguments) async {

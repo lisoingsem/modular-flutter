@@ -424,7 +424,7 @@ class BuildCommand implements Command {
 
       // Auto-update main.dart to import the generated file (fully automatic)
 
-      // This is like Laravel's autoloading - modules are auto-imported, you never touch it!
+      // Modules are auto-imported - you never touch this file!
       await _autoImportModulesInMain(projectRoot, modulesFile);
     } catch (e) {
       print('Warning: Could not generate modules import: $e');
@@ -432,7 +432,7 @@ class BuildCommand implements Command {
   }
 
   /// Automatically add modules import to main.dart (no manual work)
-  /// This is like Laravel's autoloading - you never see or touch this import
+  /// Auto-import system - you never see or touch this import
   /// It's automatically added and managed by the build command
   Future<void> _autoImportModulesInMain(
       String projectRoot, File modulesFile) async {
@@ -463,7 +463,7 @@ class BuildCommand implements Command {
       bool importAdded = false;
 
       // Find the modular_flutter import and add modules import after it
-      // This is like Laravel's autoloading - completely automatic
+      // Completely automatic - no manual configuration needed
       for (int i = 0; i < lines.length; i++) {
         final line = lines[i];
         result.add(line);

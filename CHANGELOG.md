@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.4] - 2025-01-19
+
+### Fixed
+- Fixed null check error by adding `onUnknownRoute` handlers to MaterialApp
+- Routes now properly handle unknown routes with fallback page
+
+### Changed
+- Removed all "Laravel" mentions from codebase - replaced with generic descriptions
+- Cleaned up comments and documentation to be framework-agnostic
+- Updated package description to be more generic
+
 ## [0.4.3] - 2025-01-19
 
 ### Fixed

@@ -4,7 +4,7 @@ class ModuleTemplates {
     required String alias,
     required String studlyName,
   }) {
-    // Use package name (snake_case) like Laravel modules uses namespace
+    // Use package name (snake_case) as namespace
     // Format: package_name.providers.ModuleNameServiceProvider
     return '''name: $name
 alias: $alias
@@ -42,7 +42,7 @@ export 'config/config.dart';
     required String studlyName,
   }) {
     return '''# $studlyName Configuration
-# Similar to Laravel's config files
+# Module configuration file
 
 name: $name
 version: 1.0.0

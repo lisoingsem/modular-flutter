@@ -19,13 +19,14 @@ class RouteResolver {
 
   /// Build all routes from RouteRegistry
   /// Returns a map of route paths to WidgetBuilders
-  /// Laravel-style: Routes registered ONLY via ModuleProvider.registerRoutes()
+  /// Routes registered ONLY via ModuleProvider.registerRoutes()
   /// NO module.yaml routes - everything through providers
   Map<String, WidgetBuilder> buildRoutesFromRegistry(
     RouteRegistry routeRegistry,
   ) {
-    // Routes are registered ONLY via ModuleProvider.registerRoutes() (Laravel-style)
+    // Routes are registered ONLY via ModuleProvider.registerRoutes()
     // No fallback to module.yaml - routes must be in providers
-    return Map.unmodifiable(routeRegistry.getAllBuilders());
+    // getAllBuilders() already returns non-null WidgetBuilders, so this is safe
+    return routeRegistry.getAllBuilders();
   }
 }
