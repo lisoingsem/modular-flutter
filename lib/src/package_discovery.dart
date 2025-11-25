@@ -18,6 +18,7 @@ class PackageDiscovery {
     String? localModulesPath,
   }) async {
     final root = projectRoot ?? _getProjectRoot();
+    print('PackageDiscovery: projectRoot=$root, localModulesPath=$localModulesPath');
     final discoveredModules = <Module>[];
 
     // On web, only discover from package_config.json (no file system access)
@@ -29,19 +30,25 @@ class PackageDiscovery {
 
     // 1. Discover from custom local modules path (if specified)
     if (localModulesPath != null) {
+      final customPath = path.isAbsolute(localModulesPath)
+          ? localModulesPath
+          : path.join(root, localModulesPath);
+      print('PackageDiscovery: Checking custom path: $customPath');
       final customModules = _discoverFromDirectory(
-        path.isAbsolute(localModulesPath)
-            ? localModulesPath
-            : path.join(root, localModulesPath),
+        customPath,
         activator,
       );
+      print('PackageDiscovery: Found ${customModules.length} modules in custom path');
       discoveredModules.addAll(customModules);
     } else {
       // 2. Discover from local packages directory (preferred for monorepo)
+      final packagesPath = path.join(root, 'packages');
+      print('PackageDiscovery: Checking packages directory: $packagesPath');
       final packagesModules = _discoverFromDirectory(
-        path.join(root, 'packages'),
+        packagesPath,
         activator,
       );
+      print('PackageDiscovery: Found ${packagesModules.length} modules in packages/');
       discoveredModules.addAll(packagesModules);
 
       // 3. Discover from local modules directory (fallback)
