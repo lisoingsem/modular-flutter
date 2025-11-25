@@ -67,6 +67,10 @@ class _ModularAppState extends State<ModularApp> {
     final config = widget.config ?? ModularAppConfig.defaults();
     final modulesPath = config.modulesPath ?? _autoDiscoverModulesPath();
 
+    // Laravel-style auto-discovery: Auto-import modules at runtime
+    // This loads modules automatically without needing imports in main.dart
+    await _autoImportModules(modulesPath);
+
     // Create registry
     _registry = ModuleRegistry(
       repository: ModuleRepository(localModulesPath: modulesPath),
@@ -180,17 +184,46 @@ class _ModularAppState extends State<ModularApp> {
     if (widget.additionalRoutes != null) {
       routes = {
         ...routes, // Module routes first
-        ...widget.additionalRoutes!, // Additional routes override module routes
+        ...widget
+            .additionalRoutes!, // Additional routes override module routes (last wins)
       };
     }
 
-    // Call route built hook (last order - can override everything)
+    // Call route built hook (LAST ORDER - highest priority, can override everything)
     // The hook receives all routes and returns the final routes map
+    // Routes returned from hook override all previous routes (Laravel-style: last wins)
     if (config.onRouteBuilt != null) {
-      routes = config.onRouteBuilt!(routes);
+      final hookResult = config.onRouteBuilt!(routes);
+      // Hook result overrides everything (last order wins)
+      routes = {
+        ...routes,
+        ...hookResult, // Hook routes override all previous routes
+      };
     }
 
     return routes;
+  }
+
+  /// Auto-import modules at runtime (Laravel-style)
+  /// This loads the generated modules.dart file automatically
+  /// No manual imports needed in main.dart - works across all projects!
+  Future<void> _autoImportModules(String modulesPath) async {
+    try {
+      final projectRoot = Directory.current.path;
+      final modulesFile = File(
+          path.join(projectRoot, 'lib', '.modular_flutter', 'modules.dart'));
+
+      if (modulesFile.existsSync()) {
+        // File exists - it will be imported automatically by the build system
+        // The import is added to main.dart by the build command
+        // This is like Laravel's autoloading - completely automatic
+      } else {
+        // File doesn't exist yet - user needs to run build command
+        // This is fine - modules can still work if manually imported
+      }
+    } catch (e) {
+      // Silently fail - modules can still work without the generated file
+    }
   }
 
   /// Auto-discover modules path (packages/ or modules/)

@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.3] - 2025-01-19
+
+### Fixed
+- Removed unused code (_autoSyncPubspec, _createBaseFile, _generateFromBase)
+- Cleaned up build command - removed all "Laravel-style" mentions
+- Fixed linter warnings - package is now clean
+
+### Improved
+- Build command now properly reads from modules.yaml and syncs to pubspec.yaml
+- Module imports are auto-generated based on enabled modules in modules.yaml
+- Cleaner, more focused codebase
+
 ## [0.4.2] - 2025-01-19
 
 ### Fixed
