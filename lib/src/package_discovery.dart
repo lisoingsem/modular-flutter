@@ -18,7 +18,8 @@ class PackageDiscovery {
     String? localModulesPath,
   }) async {
     final root = projectRoot ?? _getProjectRoot();
-    print('PackageDiscovery: projectRoot=$root, localModulesPath=$localModulesPath');
+    print(
+        'PackageDiscovery: projectRoot=$root, localModulesPath=$localModulesPath');
     final discoveredModules = <Module>[];
 
     // On web, only discover from package_config.json (no file system access)
@@ -38,7 +39,8 @@ class PackageDiscovery {
         customPath,
         activator,
       );
-      print('PackageDiscovery: Found ${customModules.length} modules in custom path');
+      print(
+          'PackageDiscovery: Found ${customModules.length} modules in custom path');
       discoveredModules.addAll(customModules);
     } else {
       // 2. Discover from local packages directory (preferred for monorepo)
@@ -48,7 +50,8 @@ class PackageDiscovery {
         packagesPath,
         activator,
       );
-      print('PackageDiscovery: Found ${packagesModules.length} modules in packages/');
+      print(
+          'PackageDiscovery: Found ${packagesModules.length} modules in packages/');
       discoveredModules.addAll(packagesModules);
 
       // 3. Discover from local modules directory (fallback)
@@ -89,28 +92,44 @@ class PackageDiscovery {
       return [];
     }
 
+    print('PackageDiscovery._discoverFromDirectory: Checking $modulesPath');
     final modulesDir = Directory(modulesPath);
     if (!modulesDir.existsSync()) {
+      print('PackageDiscovery._discoverFromDirectory: Directory does not exist: $modulesPath');
       return [];
     }
 
+    final entries = modulesDir.listSync();
+    print('PackageDiscovery._discoverFromDirectory: Found ${entries.length} entries');
     final modules = <Module>[];
-    for (final entity in modulesDir.listSync()) {
-      if (entity is Directory) {
-        final moduleYaml = File(path.join(entity.path, 'module.yaml'));
-        if (moduleYaml.existsSync()) {
-          try {
-            final module = Module.fromPath(entity.path);
-            // Only add if enabled (if activator is provided)
-            if (activator == null || activator.hasStatus(module, true)) {
-              modules.add(module);
-            }
-          } catch (e) {
-            print('Warning: Failed to load module at ${entity.path}: $e');
-          }
+    for (final entity in entries) {
+      if (entity is! Directory) {
+        print('PackageDiscovery._discoverFromDirectory: Skipping non-directory: ${entity.path}');
+        continue;
+      }
+      print('PackageDiscovery._discoverFromDirectory: Checking directory: ${entity.path}');
+      final moduleYaml = File(path.join(entity.path, 'module.yaml'));
+      if (!moduleYaml.existsSync()) {
+        print('PackageDiscovery._discoverFromDirectory: No module.yaml in ${entity.path}');
+        continue;
+      }
+      try {
+        print('PackageDiscovery._discoverFromDirectory: Loading module from ${entity.path}');
+        final module = Module.fromPath(entity.path);
+        print('PackageDiscovery._discoverFromDirectory: Loaded module: ${module.name} (alias: ${module.alias}, enabled: ${module.enabled})');
+        // Only add if enabled (if activator is provided)
+        if (activator == null || activator.hasStatus(module, true)) {
+          print('PackageDiscovery._discoverFromDirectory: Adding module: ${module.alias}');
+          modules.add(module);
+        } else {
+          print('PackageDiscovery._discoverFromDirectory: Skipping disabled module: ${module.alias}');
         }
+      } catch (e, stackTrace) {
+        print('PackageDiscovery._discoverFromDirectory: Error loading module at ${entity.path}: $e');
+        print('PackageDiscovery._discoverFromDirectory: Stack trace: $stackTrace');
       }
     }
+    print('PackageDiscovery._discoverFromDirectory: Returning ${modules.length} modules from $modulesPath');
     return modules;
   }
 
